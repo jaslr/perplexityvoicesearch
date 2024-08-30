@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.3';
+    const version = '0.1.4';
 
     // Create a UI element for the microphone
     const micUI = document.createElement('button');
@@ -79,12 +79,12 @@ javascript:(function() {
             inputField.style.boxShadow = '0 0 5px #635bff';
             
             // Trigger the search
-            const submitButton = document.querySelector('button[type="submit"]');
-            if (submitButton) {
+            const submitButton = document.querySelector('button[aria-label="Submit"]');
+            if (submitButton && !submitButton.disabled) {
                 submitButton.click();
                 console.log('Search triggered after voice input');
             } else {
-                console.log('Submit button not found');
+                console.log('Submit button not found or is disabled');
             }
         }
     }
@@ -110,4 +110,4 @@ javascript:(function() {
     } else {
         console.log('Textarea not found');
     }
-})(); // Version 0.1.3
+})(); // Version 0.1.4
