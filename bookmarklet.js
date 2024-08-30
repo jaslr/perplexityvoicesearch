@@ -1,4 +1,7 @@
 javascript:(function() {
+    // Version number
+    const version = '0.1.0';
+
     // Create a UI element for the microphone
     const micUI = document.createElement('div');
     micUI.style.position = 'fixed';
@@ -71,8 +74,15 @@ javascript:(function() {
         timeout = setTimeout(() => {
             const inputField = document.querySelector('input[placeholder="Ask follow-up"], textarea[placeholder="Ask follow-up"], input[placeholder="Ask anything..."], textarea[placeholder="Ask anything..."]');
             if (inputField) {
+                // Show that the textarea has been 'touched'
+                inputField.style.boxShadow = '0 0 5px #635bff';
+                
+                // Simulate pressing the "Enter" key
                 const event = new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true });
                 inputField.dispatchEvent(event);
+                
+                // Console log that Enter has been pressed
+                console.log('Enter key pressed after timeout');
             }
         }, 5000); // 5 seconds
     };
@@ -86,4 +96,4 @@ javascript:(function() {
     } else {
         alert('Input field or textarea not found');
     }
-})();
+})(); // Version 0.1.0
