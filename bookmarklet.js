@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.4';
+    const version = '0.1.5';
 
     // Create a UI element for the microphone
     const micUI = document.createElement('button');
@@ -52,13 +52,21 @@ javascript:(function() {
 
     recognition.onresult = (event) => {
         const transcript = event.results[event.results.length - 1][0].transcript.trim();
-        const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
-        if (inputField) {
-            inputField.value += (inputField.value ? ' ' : '') + transcript;
+        const visibleTextarea = document.querySelector('textarea[placeholder="Ask anything..."]');
+        const shadowRoot = visibleTextarea.getRootNode();
+        const shadowTextarea = shadowRoot.querySelector('#placeholder');
+        
+        if (visibleTextarea && shadowTextarea) {
+            // Update visible textarea
+            visibleTextarea.value += (visibleTextarea.value ? ' ' : '') + transcript;
+            
+            // Update shadow DOM textarea
+            shadowTextarea.textContent += (shadowTextarea.textContent ? ' - ' : '') + transcript;
             
             // Trigger input event to notify of value change
             const inputEvent = new Event('input', { bubbles: true });
-            inputField.dispatchEvent(inputEvent);
+            visibleTextarea.dispatchEvent(inputEvent);
+            shadowTextarea.dispatchEvent(inputEvent);
 
             console.log('Voice input inserted:', transcript);
         }
@@ -73,19 +81,12 @@ javascript:(function() {
     };
 
     function triggerSearch() {
-        const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
-        if (inputField) {
-            // Show that the textarea has been 'touched'
-            inputField.style.boxShadow = '0 0 5px #635bff';
-            
-            // Trigger the search
-            const submitButton = document.querySelector('button[aria-label="Submit"]');
-            if (submitButton && !submitButton.disabled) {
-                submitButton.click();
-                console.log('Search triggered after voice input');
-            } else {
-                console.log('Submit button not found or is disabled');
-            }
+        const submitButton = document.querySelector('button[aria-label="Submit"]');
+        if (submitButton && !submitButton.disabled) {
+            submitButton.click();
+            console.log('Search triggered after voice input');
+        } else {
+            console.log('Submit button not found or is disabled');
         }
     }
 
@@ -110,4 +111,4 @@ javascript:(function() {
     } else {
         console.log('Textarea not found');
     }
-})(); // Version 0.1.4
+})(); // Version 0.1.5
