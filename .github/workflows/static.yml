@@ -22,7 +22,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        run: |
+          git clone https://github.com/jaslr/perplexityvoicesearch.git .
+          git checkout ${{ github.sha }}
 
       - name: Setup Pages
         run: |
@@ -34,20 +36,20 @@ jobs:
           echo "Building project..."
           # Add your build commands here, if any
 
-      - name: Upload artifact
+      - name: Prepare artifact
         run: |
-          echo "Uploading artifact..."
-          # Add commands to prepare and upload your artifact
+          echo "Preparing artifact..."
+          # Add commands to prepare your artifact
           # For example:
           # zip -r artifact.zip .
-          # echo "artifact=./artifact.zip" >> $GITHUB_OUTPUT
 
       - name: Deploy to GitHub Pages
-        id: deployment
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Deploying to GitHub Pages..."
           # Add deployment commands here
+          # You might need to use the GitHub CLI or API for this step
           # For example:
+          # gh auth login --with-token <<< $GITHUB_TOKEN
           # gh pages deploy --dir .
