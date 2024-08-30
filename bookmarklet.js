@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.0';
+    const version = '0.1.2';
 
     // Create a UI element for the microphone
     const micUI = document.createElement('button');
@@ -51,10 +51,10 @@ javascript:(function() {
     let isListening = false;
 
     recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript.trim();
+        const transcript = event.results[event.results.length - 1][0].transcript.trim();
         const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
         if (inputField) {
-            inputField.value = transcript;
+            inputField.value += (inputField.value ? ' ' : '') + transcript;
             
             // Simulate keyboard input
             const inputEvent = new Event('input', { bubbles: true });
@@ -66,21 +66,29 @@ javascript:(function() {
 
         // Clear the timeout if the user is still speaking
         clearTimeout(timeout);
+        
+        // Set a new timeout
+        timeout = setTimeout(() => {
+            triggerSearch();
+        }, 2000); // 2 seconds of inactivity
     };
 
-    recognition.onspeechend = () => {
-        // Set a timeout to show that the textarea has been 'touched' after a 5-second pause
-        timeout = setTimeout(() => {
-            const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
-            if (inputField) {
-                // Show that the textarea has been 'touched'
-                inputField.style.boxShadow = '0 0 5px #635bff';
-                
-                // Console log that the input has been processed
-                console.log('Voice input processed after timeout');
+    function triggerSearch() {
+        const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
+        if (inputField) {
+            // Show that the textarea has been 'touched'
+            inputField.style.boxShadow = '0 0 5px #635bff';
+            
+            // Trigger the search
+            const submitButton = document.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.click();
+                console.log('Search triggered after voice input');
+            } else {
+                console.log('Submit button not found');
             }
-        }, 5000); // 5 seconds
-    };
+        }
+    }
 
     micUI.addEventListener('click', () => {
         if (!isListening) {
@@ -101,4 +109,4 @@ javascript:(function() {
     } else {
         alert('Textarea not found');
     }
-})(); // Version 0.1.0
+})(); // Version 0.1.1
