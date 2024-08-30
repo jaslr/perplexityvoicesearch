@@ -49,6 +49,14 @@ javascript:(function() {
         const inputField = document.querySelector('input[placeholder="Ask follow-up"], textarea[placeholder="Ask follow-up"], input[placeholder="Ask anything..."], textarea[placeholder="Ask anything..."]');
         if (inputField) {
             inputField.value = transcript;
+            
+            // Simulate keyboard input
+            const inputEvent = new Event('input', { bubbles: true });
+            inputField.dispatchEvent(inputEvent);
+            
+            const keyEvent = new KeyboardEvent('keydown', { key: 'a', bubbles: true });
+            inputField.dispatchEvent(keyEvent);
+            
             if (transcript.toLowerCase() === 'submit') {
                 inputField.form.submit();
             }
