@@ -59,6 +59,8 @@ javascript:(function() {
             // Trigger input event to notify of value change
             const inputEvent = new Event('input', { bubbles: true });
             inputField.dispatchEvent(inputEvent);
+
+            console.log('Voice input inserted:', transcript);
         }
 
         // Clear the timeout if the user is still speaking
@@ -92,10 +94,12 @@ javascript:(function() {
             recognition.start();
             isListening = true;
             micUI.style.backgroundColor = '#ff4136'; // Change color to indicate active listening
+            console.log('Listening started');
         } else {
             recognition.stop();
             isListening = false;
             micUI.style.backgroundColor = '#635bff'; // Change color back to original
+            console.log('Listening stopped');
         }
     });
 
@@ -104,6 +108,6 @@ javascript:(function() {
     if (inputField) {
         inputField.focus();
     } else {
-        alert('Textarea not found');
+        console.log('Textarea not found');
     }
-})(); // Version 0.1.2
+})(); // Version 0.1.3
