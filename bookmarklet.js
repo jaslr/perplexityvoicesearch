@@ -2,11 +2,12 @@ javascript:(function() {
     // Create a UI element for the microphone
     const micUI = document.createElement('div');
     micUI.style.position = 'fixed';
-    micUI.style.bottom = '20px';
-    micUI.style.right = '20px';
+    micUI.style.top = '50px';
+    micUI.style.left = '50%';
+    micUI.style.transform = 'translateX(-50%)';
     micUI.style.width = '50px';
     micUI.style.height = '50px';
-    micUI.style.backgroundColor = 'black';
+    micUI.style.backgroundColor = '#635bff'; // Stripe's primary color
     micUI.style.borderRadius = '50%';
     micUI.style.display = 'flex';
     micUI.style.justifyContent = 'center';
@@ -14,7 +15,26 @@ javascript:(function() {
     micUI.style.color = 'white';
     micUI.style.fontSize = '24px';
     micUI.innerText = '🎤';
+    micUI.style.boxShadow = '0 0 0 0 rgba(99, 91, 255, 1)';
+    micUI.style.animation = 'pulse 2s infinite';
     document.body.appendChild(micUI);
+
+    // Add the pulse animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(99, 91, 255, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(99, 91, 255, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(99, 91, 255, 0);
+            }
+        }
+    `;
+    document.head.appendChild(style);
 
     // Initialize speech recognition
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
