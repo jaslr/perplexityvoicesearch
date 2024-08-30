@@ -22,13 +22,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: jaslr/perplexityvoicesearch/.github/actions/checkout@main
+        uses: actions/checkout@v4
+
       - name: Setup Pages
-        uses: jaslr/perplexityvoicesearch/.github/actions/configure-pages@main
+        run: |
+          echo "Setting up Pages..."
+          # Add any necessary setup steps here
+
+      - name: Build project
+        run: |
+          echo "Building project..."
+          # Add your build commands here, if any
+
       - name: Upload artifact
-        uses: jaslr/perplexityvoicesearch/.github/actions/upload-pages-artifact@main
-        with:
-          path: '.'
+        run: |
+          echo "Uploading artifact..."
+          # Add commands to prepare and upload your artifact
+          # For example:
+          # zip -r artifact.zip .
+          # echo "artifact=./artifact.zip" >> $GITHUB_OUTPUT
+
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: jaslr/perplexityvoicesearch/.github/actions/deploy-pages@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Deploying to GitHub Pages..."
+          # Add deployment commands here
+          # For example:
+          # gh pages deploy --dir .
