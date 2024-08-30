@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.2';
+    const version = '0.1.3';
 
     // Create a UI element for the microphone
     const micUI = document.createElement('button');
@@ -56,12 +56,9 @@ javascript:(function() {
         if (inputField) {
             inputField.value += (inputField.value ? ' ' : '') + transcript;
             
-            // Simulate keyboard input
+            // Trigger input event to notify of value change
             const inputEvent = new Event('input', { bubbles: true });
             inputField.dispatchEvent(inputEvent);
-            
-            const keyEvent = new KeyboardEvent('keydown', { key: 'a', bubbles: true });
-            inputField.dispatchEvent(keyEvent);
         }
 
         // Clear the timeout if the user is still speaking
@@ -109,4 +106,4 @@ javascript:(function() {
     } else {
         alert('Textarea not found');
     }
-})(); // Version 0.1.1
+})(); // Version 0.1.2
