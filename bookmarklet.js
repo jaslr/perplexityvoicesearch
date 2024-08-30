@@ -3,20 +3,22 @@ javascript:(function() {
     const version = '0.1.0';
 
     // Create a UI element for the microphone
-    const micUI = document.createElement('div');
+    const micUI = document.createElement('button');
     micUI.style.position = 'fixed';
     micUI.style.top = '50px';
     micUI.style.left = '50%';
     micUI.style.transform = 'translateX(-50%)';
     micUI.style.width = '50px';
     micUI.style.height = '50px';
-    micUI.style.backgroundColor = '#635bff'; // Stripe's primary color
+    micUI.style.backgroundColor = '#635bff';
     micUI.style.borderRadius = '50%';
     micUI.style.display = 'flex';
     micUI.style.justifyContent = 'center';
     micUI.style.alignItems = 'center';
     micUI.style.color = 'white';
     micUI.style.fontSize = '24px';
+    micUI.style.border = 'none';
+    micUI.style.cursor = 'pointer';
     micUI.innerText = '🎤';
     micUI.style.boxShadow = '0 0 0 0 rgba(99, 91, 255, 1)';
     micUI.style.animation = 'pulse 2s infinite';
@@ -43,13 +45,14 @@ javascript:(function() {
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
-    recognition.continuous = true; // Allow continuous recognition
+    recognition.continuous = true;
 
     let timeout;
+    let isListening = false;
 
     recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript.trim();
-        const inputField = document.querySelector('input[placeholder="Ask follow-up"], textarea[placeholder="Ask follow-up"], input[placeholder="Ask anything..."], textarea[placeholder="Ask anything..."]');
+        const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
         if (inputField) {
             inputField.value = transcript;
             
@@ -59,10 +62,6 @@ javascript:(function() {
             
             const keyEvent = new KeyboardEvent('keydown', { key: 'a', bubbles: true });
             inputField.dispatchEvent(keyEvent);
-            
-            if (transcript.toLowerCase() === 'submit') {
-                inputField.form.submit();
-            }
         }
 
         // Clear the timeout if the user is still speaking
@@ -70,30 +69,36 @@ javascript:(function() {
     };
 
     recognition.onspeechend = () => {
-        // Set a timeout to simulate pressing the "Enter" key after a 5-second pause
+        // Set a timeout to show that the textarea has been 'touched' after a 5-second pause
         timeout = setTimeout(() => {
-            const inputField = document.querySelector('input[placeholder="Ask follow-up"], textarea[placeholder="Ask follow-up"], input[placeholder="Ask anything..."], textarea[placeholder="Ask anything..."]');
+            const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
             if (inputField) {
                 // Show that the textarea has been 'touched'
                 inputField.style.boxShadow = '0 0 5px #635bff';
                 
-                // Simulate pressing the "Enter" key
-                const event = new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true });
-                inputField.dispatchEvent(event);
-                
-                // Console log that Enter has been pressed
-                console.log('Enter key pressed after timeout');
+                // Console log that the input has been processed
+                console.log('Voice input processed after timeout');
             }
         }, 5000); // 5 seconds
     };
 
-    recognition.start();
+    micUI.addEventListener('click', () => {
+        if (!isListening) {
+            recognition.start();
+            isListening = true;
+            micUI.style.backgroundColor = '#ff4136'; // Change color to indicate active listening
+        } else {
+            recognition.stop();
+            isListening = false;
+            micUI.style.backgroundColor = '#635bff'; // Change color back to original
+        }
+    });
 
     // Focus on the input field
-    const inputField = document.querySelector('input[placeholder="Ask follow-up"], textarea[placeholder="Ask follow-up"], input[placeholder="Ask anything..."], textarea[placeholder="Ask anything..."]');
+    const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
     if (inputField) {
         inputField.focus();
     } else {
-        alert('Input field or textarea not found');
+        alert('Textarea not found');
     }
 })(); // Version 0.1.0
