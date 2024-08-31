@@ -1,16 +1,16 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.5';
+    const version = '0.1.6';
 
     // Create a UI element for the microphone
     const micUI = document.createElement('button');
     micUI.style.position = 'fixed';
     micUI.style.top = '50px';
-    micUI.style.right = '10%';
+    micUI.style.left = '50%';
     micUI.style.transform = 'translateX(-50%)';
     micUI.style.width = '50px';
     micUI.style.height = '50px';
-    micUI.style.backgroundColor = '#000000';
+    micUI.style.backgroundColor = '#635bff';
     micUI.style.borderRadius = '50%';
     micUI.style.display = 'flex';
     micUI.style.justifyContent = 'center';
@@ -50,34 +50,28 @@ javascript:(function() {
     let timeout;
     let isListening = false;
 
+    function simulateTyping(text) {
+        const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
+        if (!inputField) return;
+
+        let i = 0;
+        function typeChar() {
+            if (i < text.length) {
+                inputField.value += text[i];
+                inputField.dispatchEvent(new Event('input', { bubbles: true }));
+                i++;
+                setTimeout(typeChar, 50); // Adjust typing speed here
+            } else {
+                triggerSearch();
+            }
+        }
+        typeChar();
+    }
+
     recognition.onresult = (event) => {
         const transcript = event.results[event.results.length - 1][0].transcript.trim();
-        const visibleTextarea = document.querySelector('textarea[placeholder="Ask anything..."]');
-        const shadowRoot = visibleTextarea.getRootNode();
-        const shadowTextarea = shadowRoot.querySelector('#placeholder');
-        
-        if (visibleTextarea && shadowTextarea) {
-            // Update visible textarea
-            visibleTextarea.value += (visibleTextarea.value ? ' ' : '') + transcript;
-            
-            // Update shadow DOM textarea
-            shadowTextarea.textContent += (shadowTextarea.textContent ? ' - ' : '') + transcript;
-            
-            // Trigger input event to notify of value change
-            const inputEvent = new Event('input', { bubbles: true });
-            visibleTextarea.dispatchEvent(inputEvent);
-            shadowTextarea.dispatchEvent(inputEvent);
-
-            console.log('Voice input inserted:', transcript);
-        }
-
-        // Clear the timeout if the user is still speaking
-        clearTimeout(timeout);
-        
-        // Set a new timeout
-        timeout = setTimeout(() => {
-            triggerSearch();
-        }, 2000); // 2 seconds of inactivity
+        console.log('Voice input received:', transcript);
+        simulateTyping(transcript);
     };
 
     function triggerSearch() {
@@ -111,4 +105,4 @@ javascript:(function() {
     } else {
         console.log('Textarea not found');
     }
-})(); // Version 0.1.5
+})(); // Version 0.1.6
