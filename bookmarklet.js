@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.10';
+    const version = '0.1.11';
 
     // Create a container for the UI elements
     const uiContainer = document.createElement('div');
@@ -68,7 +68,7 @@ javascript:(function() {
     // Initialize speech recognition
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+    maxAlternatives = 1;
     recognition.continuous = true;
 
     let isListening = false;
@@ -187,4 +187,4 @@ javascript:(function() {
         }
     }, 1000);
 
-})(); // Version 0.1.10
+})(); // Version 0.1.11
