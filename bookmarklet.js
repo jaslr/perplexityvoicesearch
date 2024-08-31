@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.9';
+    const version = '0.1.10';
 
     // Create a container for the UI elements
     const uiContainer = document.createElement('div');
@@ -75,18 +75,28 @@ javascript:(function() {
 
     function simulateTyping(text) {
         const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
-        if (!inputField) return;
+        if (!inputField) {
+            console.error('Input field not found');
+            return;
+        }
 
+        console.log('Starting simulated typing:', text);
         let i = 0;
         function typeChar() {
             if (i < text.length) {
                 inputField.value += text[i];
-                inputField.dispatchEvent(new Event('input', { bubbles: true }));
-                inputField.dispatchEvent(new KeyboardEvent('keydown', { key: text[i], bubbles: true }));
-                inputField.dispatchEvent(new KeyboardEvent('keyup', { key: text[i], bubbles: true }));
+                console.log('Typed character:', text[i], 'Current value:', inputField.value);
+                
+                ['input', 'keydown', 'keyup', 'change'].forEach(eventType => {
+                    const event = new Event(eventType, { bubbles: true });
+                    inputField.dispatchEvent(event);
+                    console.log(`Dispatched ${eventType} event`);
+                });
+
                 i++;
-                setTimeout(typeChar, 50); // Adjust typing speed here
+                setTimeout(typeChar, 50);
             } else {
+                console.log('Finished typing, triggering search');
                 triggerSearch();
             }
         }
@@ -101,6 +111,8 @@ javascript:(function() {
 
     function triggerSearch() {
         const submitButton = document.querySelector('button[aria-label="Submit"]');
+        console.log('Submit button:', submitButton);
+        console.log('Submit button disabled:', submitButton ? submitButton.disabled : 'N/A');
         if (submitButton && !submitButton.disabled) {
             submitButton.click();
             console.log('Search triggered after voice input');
@@ -140,21 +152,39 @@ javascript:(function() {
     // Prevent text from disappearing when textarea is focused
     document.addEventListener('focusin', function(e) {
         if (e.target.tagName.toLowerCase() === 'textarea') {
+            console.log('Textarea focused');
             e.preventDefault();
             e.stopPropagation();
             const value = e.target.value;
+            console.log('Current textarea value:', value);
             setTimeout(() => {
                 e.target.value = value;
+                console.log('Restored textarea value:', e.target.value);
                 e.target.dispatchEvent(new Event('input', { bubbles: true }));
             }, 0);
         }
     }, true);
 
-    // Focus on the input field
+    // Monitor changes to the textarea
     const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
     if (inputField) {
+        inputField.addEventListener('input', function(e) {
+            console.log('Textarea value changed:', e.target.value);
+        });
         inputField.focus();
+        console.log('Textarea found and focused');
     } else {
-        console.log('Textarea not found');
+        console.error('Textarea not found');
     }
-})(); // Version 0.1.9
+
+    // Monitor changes to the submit button
+    setInterval(() => {
+        const submitButton = document.querySelector('button[aria-label="Submit"]');
+        if (submitButton) {
+            console.log('Submit button state:', submitButton.disabled ? 'disabled' : 'enabled');
+        } else {
+            console.log('Submit button not found');
+        }
+    }, 1000);
+
+})(); // Version 0.1.10
