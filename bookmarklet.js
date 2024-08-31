@@ -6,11 +6,11 @@ javascript:(function() {
     const micUI = document.createElement('button');
     micUI.style.position = 'fixed';
     micUI.style.top = '50px';
-    micUI.style.left = '50%';
+    micUI.style.right = '10%';
     micUI.style.transform = 'translateX(-50%)';
     micUI.style.width = '50px';
     micUI.style.height = '50px';
-    micUI.style.backgroundColor = '#635bff';
+    micUI.style.backgroundColor = '#000000';
     micUI.style.borderRadius = '50%';
     micUI.style.display = 'flex';
     micUI.style.justifyContent = 'center';
