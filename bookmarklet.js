@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.11';
+    const version = '0.1.12';
 
     // Create a container for the UI elements
     const uiContainer = document.createElement('div');
@@ -68,13 +68,14 @@ javascript:(function() {
     // Initialize speech recognition
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.interimResults = false;
-    maxAlternatives = 1;
+    recognition.maxAlternatives = 1;
     recognition.continuous = true;
 
     let isListening = false;
 
     function simulateTyping(text) {
         const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
+        const hiddenInput = document.querySelector('input[type="hidden"]');
         if (!inputField) {
             console.error('Input field not found');
             return;
@@ -85,19 +86,21 @@ javascript:(function() {
         function typeChar() {
             if (i < text.length) {
                 inputField.value += text[i];
+                if (hiddenInput) hiddenInput.value += text[i];
                 console.log('Typed character:', text[i], 'Current value:', inputField.value);
                 
-                ['input', 'keydown', 'keyup', 'change'].forEach(eventType => {
+                ['input', 'keydown', 'keyup', 'change', 'blur', 'focus'].forEach(eventType => {
                     const event = new Event(eventType, { bubbles: true });
                     inputField.dispatchEvent(event);
+                    if (hiddenInput) hiddenInput.dispatchEvent(event);
                     console.log(`Dispatched ${eventType} event`);
                 });
 
                 i++;
                 setTimeout(typeChar, 50);
             } else {
-                console.log('Finished typing, triggering search');
-                triggerSearch();
+                console.log('Finished typing, waiting before triggering search');
+                setTimeout(triggerSearch, 1000); // Wait 1 second before triggering search
             }
         }
         typeChar();
@@ -118,6 +121,12 @@ javascript:(function() {
             console.log('Search triggered after voice input');
         } else {
             console.log('Submit button not found or is disabled');
+            // Try to force enable the button
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.click();
+                console.log('Attempted to force enable and click submit button');
+            }
         }
     }
 
@@ -187,4 +196,4 @@ javascript:(function() {
         }
     }, 1000);
 
-})(); // Version 0.1.11
+})(); // Version 0.1.12
