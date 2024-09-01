@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.12';
+    const version = '0.1.14';
 
     // Create a container for the UI elements
     const uiContainer = document.createElement('div');
@@ -73,6 +73,21 @@ javascript:(function() {
 
     let isListening = false;
 
+    function simulateMouseEvents(element) {
+        const events = ['mousedown', 'mouseup', 'click'];
+        events.forEach(eventType => {
+            const event = new MouseEvent(eventType, {
+                view: window,
+                bubbles: true,
+                cancelable: true,
+                clientX: element.getBoundingClientRect().left,
+                clientY: element.getBoundingClientRect().top
+            });
+            element.dispatchEvent(event);
+            console.log(`Dispatched ${eventType} event`);
+        });
+    }
+
     function simulateTyping(text) {
         const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
         const hiddenInput = document.querySelector('input[type="hidden"]');
@@ -81,15 +96,20 @@ javascript:(function() {
             return;
         }
 
+        console.log('Simulating mouse events on input field');
+        simulateMouseEvents(inputField);
+        inputField.focus();
+
         console.log('Starting simulated typing:', text);
+        inputField.value = ''; // Clear the input field first
         let i = 0;
         function typeChar() {
             if (i < text.length) {
                 inputField.value += text[i];
-                if (hiddenInput) hiddenInput.value += text[i];
+                if (hiddenInput) hiddenInput.value = inputField.value;
                 console.log('Typed character:', text[i], 'Current value:', inputField.value);
                 
-                ['input', 'keydown', 'keyup', 'change', 'blur', 'focus'].forEach(eventType => {
+                ['input', 'keydown', 'keyup', 'change'].forEach(eventType => {
                     const event = new Event(eventType, { bubbles: true });
                     inputField.dispatchEvent(event);
                     if (hiddenInput) hiddenInput.dispatchEvent(event);
@@ -117,14 +137,16 @@ javascript:(function() {
         console.log('Submit button:', submitButton);
         console.log('Submit button disabled:', submitButton ? submitButton.disabled : 'N/A');
         if (submitButton && !submitButton.disabled) {
-            submitButton.click();
+            simulateMouseEvents(submitButton);
             console.log('Search triggered after voice input');
         } else {
             console.log('Submit button not found or is disabled');
             // Try to force enable the button
             if (submitButton) {
                 submitButton.disabled = false;
-                submitButton.click();
+                submitButton.classList.remove('opacity-50', 'cursor-default');
+                submitButton.classList.add('cursor-pointer');
+                simulateMouseEvents(submitButton);
                 console.log('Attempted to force enable and click submit button');
             }
         }
@@ -158,30 +180,13 @@ javascript:(function() {
         console.log('Voice input UI removed');
     });
 
-    // Prevent text from disappearing when textarea is focused
-    document.addEventListener('focusin', function(e) {
-        if (e.target.tagName.toLowerCase() === 'textarea') {
-            console.log('Textarea focused');
-            e.preventDefault();
-            e.stopPropagation();
-            const value = e.target.value;
-            console.log('Current textarea value:', value);
-            setTimeout(() => {
-                e.target.value = value;
-                console.log('Restored textarea value:', e.target.value);
-                e.target.dispatchEvent(new Event('input', { bubbles: true }));
-            }, 0);
-        }
-    }, true);
-
     // Monitor changes to the textarea
     const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
     if (inputField) {
         inputField.addEventListener('input', function(e) {
             console.log('Textarea value changed:', e.target.value);
         });
-        inputField.focus();
-        console.log('Textarea found and focused');
+        console.log('Textarea found');
     } else {
         console.error('Textarea not found');
     }
@@ -196,4 +201,4 @@ javascript:(function() {
         }
     }, 1000);
 
-})(); // Version 0.1.12
+})(); // Version 0.1.14
