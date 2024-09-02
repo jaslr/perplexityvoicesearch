@@ -1,7 +1,67 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.19';
+    const version = '0.1.20';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
+
+    let targetDiv;
+    let initialSnapshot;
+    let afterTypingSnapshot;
+    let afterVoiceInputSnapshot;
+
+    function takeSnapshot(element) {
+        return {
+            classes: element.className,
+            textContent: element.textContent,
+            childrenCount: element.children.length,
+            hasTextMainClass: element.classList.contains('text-textMain')
+        };
+    }
+
+    function compareSnapshots(snapshot1, snapshot2) {
+        return {
+            classesChanged: snapshot1.classes !== snapshot2.classes,
+            textContentChanged: snapshot1.textContent !== snapshot2.textContent,
+            childrenCountChanged: snapshot1.childrenCount !== snapshot2.childrenCount,
+            textMainClassChanged: snapshot1.hasTextMainClass !== snapshot2.hasTextMainClass
+        };
+    }
+
+    function findTargetDiv() {
+        const divs = document.querySelectorAll('div');
+        for (const div of divs) {
+            if (div.className.includes('text-textMain') && div.className.includes('items-center')) {
+                return div;
+            }
+        }
+        return null;
+    }
+
+    function initializeMonitoring() {
+        targetDiv = findTargetDiv();
+        if (targetDiv) {
+            initialSnapshot = takeSnapshot(targetDiv);
+            console.log('Initial snapshot taken:', initialSnapshot);
+            
+            alert('Please type something in the input field. The script will take another snapshot after 5 seconds of inactivity.');
+            
+            let typingTimer;
+            const doneTypingInterval = 5000;
+            
+            targetDiv.addEventListener('input', function() {
+                clearTimeout(typingTimer);
+                typingTimer = setTimeout(function() {
+                    afterTypingSnapshot = takeSnapshot(targetDiv);
+                    console.log('After typing snapshot taken:', afterTypingSnapshot);
+                    const changes = compareSnapshots(initialSnapshot, afterTypingSnapshot);
+                    console.log('Changes after typing:', changes);
+                    
+                    alert('Now please initiate voice input. The script will take another snapshot after voice input and 5 seconds of inactivity.');
+                }, doneTypingInterval);
+            });
+        } else {
+            console.error('Target div not found');
+        }
+    }
 
     // Create a container for the UI elements
     const uiContainer = document.createElement('div');
@@ -49,23 +109,6 @@ javascript:(function() {
     closeUI.innerText = 'X';
     uiContainer.appendChild(closeUI);
 
-    // Add the pulse animation
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(99, 91, 255, 0.7);
-            }
-            70% {
-                box-shadow: 0 0 0 10px rgba(99, 91, 255, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(99, 91, 255, 0);
-            }
-        }
-    `;
-    document.head.appendChild(style);
-
     // Initialize speech recognition
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.interimResults = false;
@@ -75,21 +118,6 @@ javascript:(function() {
     let isListening = false;
     let lastInputText = '';
 
-    function simulateMouseEvents(element) {
-        const events = ['mousedown', 'mouseup', 'click'];
-        events.forEach(eventType => {
-            const event = new MouseEvent(eventType, {
-                view: window,
-                bubbles: true,
-                cancelable: true,
-                clientX: element.getBoundingClientRect().left,
-                clientY: element.getBoundingClientRect().top
-            });
-            element.dispatchEvent(event);
-            console.log(`Dispatched ${eventType} event`);
-        });
-    }
-
     function simulateTyping(text) {
         console.group('Voice Input Processing');
         const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
@@ -98,10 +126,6 @@ javascript:(function() {
             console.groupEnd();
             return;
         }
-
-        console.log('Simulating mouse click on input field');
-        simulateMouseEvents(inputField);
-        inputField.focus();
 
         console.log('Input text:', text);
         lastInputText = text;
@@ -113,44 +137,14 @@ javascript:(function() {
             console.log(`Dispatched ${eventType} event`);
         });
 
-        // Simulate pressing Enter
-        console.log('Simulating Enter keypress');
-        const keypressEvent = new KeyboardEvent('keypress', {
-            key: 'Enter',
-            keyCode: 13,
-            which: 13,
-            bubbles: true
-        });
-        inputField.dispatchEvent(keypressEvent);
+        setTimeout(function() {
+            afterVoiceInputSnapshot = takeSnapshot(targetDiv);
+            console.log('After voice input snapshot taken:', afterVoiceInputSnapshot);
+            const changes = compareSnapshots(initialSnapshot, afterVoiceInputSnapshot);
+            console.log('Changes after voice input:', changes);
+        }, 5000);
 
-        console.log('Finished typing, waiting for submit button to become clickable');
-        waitForSubmitButton();
-    }
-
-    function waitForSubmitButton() {
-        const submitButton = document.querySelector('button[aria-label="Submit"]');
-        if (!submitButton) {
-            console.error('Submit button not found');
-            console.groupEnd();
-            return;
-        }
-
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.type === 'attributes' && (mutation.attributeName === 'class' || mutation.attributeName === 'style')) {
-                    const computedStyle = window.getComputedStyle(submitButton);
-                    const backgroundColor = computedStyle.backgroundColor;
-                    console.log('Submit button background color:', backgroundColor);
-                    if (backgroundColor === 'rgb(99, 91, 255)' || backgroundColor === '#635bff') {
-                        observer.disconnect();
-                        console.log('Submit button is now clickable');
-                        triggerSearch();
-                    }
-                }
-            });
-        });
-
-        observer.observe(submitButton, { attributes: true });
+        console.groupEnd();
     }
 
     recognition.onresult = (event) => {
@@ -158,20 +152,6 @@ javascript:(function() {
         console.log('Voice input received:', transcript);
         simulateTyping(transcript);
     };
-
-    function triggerSearch() {
-        const submitButton = document.querySelector('button[aria-label="Submit"]');
-        console.log('Submit button:', submitButton);
-        console.log('Submit button disabled:', submitButton ? submitButton.disabled : 'N/A');
-        if (submitButton && !submitButton.disabled) {
-            console.log('Clicking submit button');
-            simulateMouseEvents(submitButton);
-            console.log('Search triggered after voice input');
-        } else {
-            console.log('Submit button not found or is disabled');
-        }
-        console.groupEnd();
-    }
 
     function stopListening() {
         if (isListening) {
@@ -201,26 +181,6 @@ javascript:(function() {
         console.log('Voice input UI removed');
     });
 
-    // Monitor changes to the textarea
-    const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
-    if (inputField) {
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.type === 'characterData' || mutation.type === 'childList') {
-                    console.log('Textarea value changed:', inputField.value);
-                    if (inputField.value === '' && lastInputText !== '') {
-                        console.log('Textarea cleared unexpectedly, restoring text');
-                        inputField.value = lastInputText;
-                        inputField.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
-                }
-            });
-        });
+    initializeMonitoring();
 
-        observer.observe(inputField, { characterData: true, childList: true, subtree: true });
-        console.log('Textarea observer set up');
-    } else {
-        console.error('Textarea not found');
-    }
-
-})(); // Version 0.1.19
+})(); // Version 0.1.20
