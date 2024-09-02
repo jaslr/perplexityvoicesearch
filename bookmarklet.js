@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.20';
+    const version = '0.1.21';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
 
     let targetDiv;
@@ -42,22 +42,23 @@ javascript:(function() {
             initialSnapshot = takeSnapshot(targetDiv);
             console.log('Initial snapshot taken:', initialSnapshot);
             
-            alert('Please type something in the input field. The script will take another snapshot after 5 seconds of inactivity.');
+            alert('Please type "rabbits" in the input field. The script will take another snapshot when "rabbits" is entered.');
             
-            let typingTimer;
-            const doneTypingInterval = 5000;
-            
-            targetDiv.addEventListener('input', function() {
-                clearTimeout(typingTimer);
-                typingTimer = setTimeout(function() {
-                    afterTypingSnapshot = takeSnapshot(targetDiv);
-                    console.log('After typing snapshot taken:', afterTypingSnapshot);
-                    const changes = compareSnapshots(initialSnapshot, afterTypingSnapshot);
-                    console.log('Changes after typing:', changes);
-                    
-                    alert('Now please initiate voice input. The script will take another snapshot after voice input and 5 seconds of inactivity.');
-                }, doneTypingInterval);
-            });
+            const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
+            if (inputField) {
+                inputField.addEventListener('input', function() {
+                    if (inputField.value.toLowerCase().includes('rabbits')) {
+                        afterTypingSnapshot = takeSnapshot(targetDiv);
+                        console.log('After typing snapshot taken:', afterTypingSnapshot);
+                        const changes = compareSnapshots(initialSnapshot, afterTypingSnapshot);
+                        console.log('Changes after typing:', changes);
+                        
+                        alert('Now please initiate voice input. The script will take another snapshot after voice input is processed.');
+                    }
+                });
+            } else {
+                console.error('Input field not found');
+            }
         } else {
             console.error('Target div not found');
         }
@@ -137,12 +138,10 @@ javascript:(function() {
             console.log(`Dispatched ${eventType} event`);
         });
 
-        setTimeout(function() {
-            afterVoiceInputSnapshot = takeSnapshot(targetDiv);
-            console.log('After voice input snapshot taken:', afterVoiceInputSnapshot);
-            const changes = compareSnapshots(initialSnapshot, afterVoiceInputSnapshot);
-            console.log('Changes after voice input:', changes);
-        }, 5000);
+        afterVoiceInputSnapshot = takeSnapshot(targetDiv);
+        console.log('After voice input snapshot taken:', afterVoiceInputSnapshot);
+        const changes = compareSnapshots(initialSnapshot, afterVoiceInputSnapshot);
+        console.log('Changes after voice input:', changes);
 
         console.groupEnd();
     }
@@ -183,4 +182,4 @@ javascript:(function() {
 
     initializeMonitoring();
 
-})(); // Version 0.1.20
+})(); // Version 0.1.21
