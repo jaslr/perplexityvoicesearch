@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.25';
+    const version = '0.1.26';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
 
     let targetElement;
@@ -64,32 +64,31 @@ javascript:(function() {
         }
 
         console.log('Input text:', text);
-        targetElement.value = text;
-        targetElement.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
-        targetElement.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
-
-        // Simulate more detailed typing events
-        text.split('').forEach((char, index) => {
-            targetElement.value = text.slice(0, index + 1);
-            targetElement.dispatchEvent(new KeyboardEvent('keydown', { key: char, bubbles: true }));
-            targetElement.dispatchEvent(new KeyboardEvent('keypress', { key: char, bubbles: true }));
-            targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: char, bubbles: true }));
-            targetElement.dispatchEvent(new Event('input', { bubbles: true }));
-        });
-
-        // Dispatch a final set of events
-        targetElement.dispatchEvent(new Event('change', { bubbles: true }));
-        targetElement.dispatchEvent(new Event('blur', { bubbles: true }));
-        targetElement.dispatchEvent(new Event('focus', { bubbles: true }));
-
-        setTimeout(() => {
-            afterVoiceInputSnapshot = takeSnapshot(targetElement);
-            console.log('After voice input snapshot taken:', afterVoiceInputSnapshot);
-            const changes = compareSnapshots(initialSnapshot, afterVoiceInputSnapshot);
-            console.log('Changes after voice input:', changes);
-            triggerSearch();
-        }, 1000);
-
+        
+        let index = 0;
+        function typeNextChar() {
+            if (index < text.length) {
+                const char = text[index];
+                targetElement.value += char;
+                targetElement.dispatchEvent(new Event('input', { bubbles: true }));
+                targetElement.dispatchEvent(new KeyboardEvent('keydown', { key: char, bubbles: true }));
+                targetElement.dispatchEvent(new KeyboardEvent('keypress', { key: char, bubbles: true }));
+                targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: char, bubbles: true }));
+                index++;
+                setTimeout(typeNextChar, 50); // Adjust this delay as needed
+            } else {
+                targetElement.dispatchEvent(new Event('change', { bubbles: true }));
+                setTimeout(() => {
+                    afterVoiceInputSnapshot = takeSnapshot(targetElement);
+                    console.log('After voice input snapshot taken:', afterVoiceInputSnapshot);
+                    const changes = compareSnapshots(initialSnapshot, afterVoiceInputSnapshot);
+                    console.log('Changes after voice input:', changes);
+                    triggerSearch();
+                }, 500);
+            }
+        }
+        
+        typeNextChar();
         console.groupEnd();
     }
 
@@ -105,7 +104,7 @@ javascript:(function() {
         targetElement.dispatchEvent(enterEvent);
         console.log('Enter key event dispatched');
 
-        // Also try to click the submit button as a fallback
+        // Also try to click the submit button
         const submitButton = document.querySelector('button[aria-label="Submit"]');
         if (submitButton) {
             console.log('Submit button found, attempting to click');
@@ -168,4 +167,4 @@ javascript:(function() {
 
     initializeMonitoring();
 
-})(); // Version 0.1.25
+})(); // Version 0.1.26
