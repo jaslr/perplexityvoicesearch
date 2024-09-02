@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.31';
+    const version = '0.1.32';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
 
     let targetElement;
@@ -51,7 +51,7 @@ javascript:(function() {
                     const changes = compareSnapshots(initialSnapshot, afterTypingSnapshot);
                     console.log('Changes after typing:', changes);
                     
-                    alert('Now please initiate voice input. The script will take another snapshot after voice input is processed.');
+                    alert('Now please initiate voice input. The script will type out the input in real-time.');
                 }
             });
         } else {
@@ -59,45 +59,17 @@ javascript:(function() {
         }
     }
 
-    function simulateTyping(text) {
-        console.group('Voice Input Processing');
+    function typeCharacter(char) {
         if (!targetElement) {
             console.error('Target element not found');
-            console.groupEnd();
             return;
         }
 
-        console.log('Input text:', text);
-        
-        // Clear the existing content
-        targetElement.value = '';
+        targetElement.value += char;
         targetElement.dispatchEvent(new Event('input', { bubbles: true }));
-
-        const typeCharacter = (index) => {
-            if (index < text.length) {
-                const char = text[index];
-                targetElement.value += char;
-                targetElement.dispatchEvent(new Event('input', { bubbles: true }));
-                targetElement.dispatchEvent(new KeyboardEvent('keydown', { key: char, bubbles: true }));
-                targetElement.dispatchEvent(new KeyboardEvent('keypress', { key: char, bubbles: true }));
-                targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: char, bubbles: true }));
-                
-                const delay = Math.floor(Math.random() * 100) + 50; // Random delay between 50-150ms
-                setTimeout(() => typeCharacter(index + 1), delay);
-            } else {
-                targetElement.dispatchEvent(new Event('change', { bubbles: true }));
-                setTimeout(() => {
-                    afterVoiceInputSnapshot = takeSnapshot(targetElement);
-                    console.log('After voice input snapshot taken:', afterVoiceInputSnapshot);
-                    const changes = compareSnapshots(initialSnapshot, afterVoiceInputSnapshot);
-                    console.log('Changes after voice input:', changes);
-                    monitorSubmitButton();
-                }, 500);
-            }
-        };
-
-        typeCharacter(0);
-        console.groupEnd();
+        targetElement.dispatchEvent(new KeyboardEvent('keydown', { key: char, bubbles: true }));
+        targetElement.dispatchEvent(new KeyboardEvent('keypress', { key: char, bubbles: true }));
+        targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: char, bubbles: true }));
     }
 
     function monitorSubmitButton() {
@@ -131,16 +103,28 @@ javascript:(function() {
 
     // Initialize speech recognition
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+    recognition.interimResults = true;
     recognition.continuous = true;
 
     let isListening = false;
 
     recognition.onresult = (event) => {
-        const transcript = event.results[event.results.length - 1][0].transcript.trim();
-        console.log('Voice input received:', transcript);
-        simulateTyping(transcript);
+        const result = event.results[event.results.length - 1];
+        const transcript = result[0].transcript;
+        
+        if (result.isFinal) {
+            console.log('Final voice input received:', transcript);
+            targetElement.dispatchEvent(new Event('change', { bubbles: true }));
+            afterVoiceInputSnapshot = takeSnapshot(targetElement);
+            console.log('After voice input snapshot taken:', afterVoiceInputSnapshot);
+            const changes = compareSnapshots(initialSnapshot, afterVoiceInputSnapshot);
+            console.log('Changes after voice input:', changes);
+            monitorSubmitButton();
+        } else {
+            console.log('Interim voice input:', transcript);
+            const lastChar = transcript[transcript.length - 1];
+            typeCharacter(lastChar);
+        }
     };
 
     function stopListening() {
@@ -182,4 +166,4 @@ javascript:(function() {
 
     initializeMonitoring();
 
-})(); // Version 0.1.31
+})(); // Version 0.1.32
