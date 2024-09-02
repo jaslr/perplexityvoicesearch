@@ -1,12 +1,13 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.27';
+    const version = '0.1.28';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
 
     let targetElement;
     let initialSnapshot;
     let afterTypingSnapshot;
     let afterVoiceInputSnapshot;
+    let rabbitsTyped = false;
 
     function takeSnapshot(element) {
         return {
@@ -38,10 +39,13 @@ javascript:(function() {
             initialSnapshot = takeSnapshot(targetElement);
             console.log('Initial snapshot taken:', initialSnapshot);
             
-            alert('Please type "rabbits" in the input field. The script will take another snapshot when "rabbits" is entered.');
+            if (!rabbitsTyped) {
+                alert('Please type "rabbits" in the input field. The script will take another snapshot when "rabbits" is entered.');
+            }
             
             targetElement.addEventListener('input', function() {
-                if (targetElement.value.toLowerCase().includes('rabbits')) {
+                if (targetElement.value.toLowerCase().includes('rabbits') && !rabbitsTyped) {
+                    rabbitsTyped = true;
                     afterTypingSnapshot = takeSnapshot(targetElement);
                     console.log('After typing snapshot taken:', afterTypingSnapshot);
                     const changes = compareSnapshots(initialSnapshot, afterTypingSnapshot);
@@ -108,11 +112,18 @@ javascript:(function() {
         targetElement.dispatchEvent(enterEvent);
         console.log('Enter key event dispatched');
 
+        // Simulate the exact sequence of events that occur when Enter is pressed
+        targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
+        targetElement.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', bubbles: true }));
+
         // Also try to click the submit button
         const submitButton = document.querySelector('button[aria-label="Submit"]');
         if (submitButton) {
             console.log('Submit button found, attempting to click');
             submitButton.click();
+            // Simulate mousedown and mouseup events
+            submitButton.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+            submitButton.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
         } else {
             console.log('Submit button not found');
         }
@@ -171,4 +182,4 @@ javascript:(function() {
 
     initializeMonitoring();
 
-})(); // Version 0.1.27
+})(); // Version 0.1.28
