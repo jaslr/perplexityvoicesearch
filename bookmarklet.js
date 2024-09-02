@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.17';
+    const version = '0.1.18';
 
     // Create a container for the UI elements
     const uiContainer = document.createElement('div');
@@ -92,7 +92,6 @@ javascript:(function() {
     function simulateTyping(text) {
         console.group('Voice Input Processing');
         const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
-        const hiddenInput = document.querySelector('input[type="hidden"]');
         if (!inputField) {
             console.error('Input field not found');
             console.groupEnd();
@@ -105,42 +104,52 @@ javascript:(function() {
 
         console.log('Input text:', text);
         lastInputText = text;
-        inputField.value = text.slice(0, -1); // Set value to all but last character
-        if (hiddenInput) hiddenInput.value = text.slice(0, -1);
+        inputField.value = text;
 
         ['input', 'keydown', 'keyup', 'change'].forEach(eventType => {
             const event = new Event(eventType, { bubbles: true });
             inputField.dispatchEvent(event);
-            if (hiddenInput) hiddenInput.dispatchEvent(event);
             console.log(`Dispatched ${eventType} event`);
         });
 
-        // Simulate typing the last character
-        setTimeout(() => {
-            inputField.value = text;
-            if (hiddenInput) hiddenInput.value = text;
-            ['input', 'keydown', 'keyup', 'change'].forEach(eventType => {
-                const event = new Event(eventType, { bubbles: true });
-                inputField.dispatchEvent(event);
-                if (hiddenInput) hiddenInput.dispatchEvent(event);
-                console.log(`Dispatched ${eventType} event for last character`);
+        // Simulate pressing Enter
+        console.log('Simulating Enter keypress');
+        const keypressEvent = new KeyboardEvent('keypress', {
+            key: 'Enter',
+            keyCode: 13,
+            which: 13,
+            bubbles: true
+        });
+        inputField.dispatchEvent(keypressEvent);
+
+        console.log('Finished typing, waiting for submit button to become clickable');
+        waitForSubmitButton();
+    }
+
+    function waitForSubmitButton() {
+        const submitButton = document.querySelector('button[aria-label="Submit"]');
+        if (!submitButton) {
+            console.error('Submit button not found');
+            console.groupEnd();
+            return;
+        }
+
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && (mutation.attributeName === 'class' || mutation.attributeName === 'style')) {
+                    const computedStyle = window.getComputedStyle(submitButton);
+                    const backgroundColor = computedStyle.backgroundColor;
+                    console.log('Submit button background color:', backgroundColor);
+                    if (backgroundColor === 'rgb(99, 91, 255)' || backgroundColor === '#635bff') {
+                        observer.disconnect();
+                        console.log('Submit button is now clickable');
+                        triggerSearch();
+                    }
+                }
             });
+        });
 
-            // Simulate pressing Enter
-            setTimeout(() => {
-                console.log('Simulating Enter keypress');
-                const keypressEvent = new KeyboardEvent('keypress', {
-                    key: 'Enter',
-                    keyCode: 13,
-                    which: 13,
-                    bubbles: true
-                });
-                inputField.dispatchEvent(keypressEvent);
-
-                console.log('Finished typing, waiting before triggering search');
-                setTimeout(triggerSearch, 1000); // Wait 1 second before triggering search
-            }, 100);
-        }, 100);
+        observer.observe(submitButton, { attributes: true });
     }
 
     recognition.onresult = (event) => {
@@ -159,14 +168,6 @@ javascript:(function() {
             console.log('Search triggered after voice input');
         } else {
             console.log('Submit button not found or is disabled');
-            // Try to force enable the button
-            if (submitButton) {
-                submitButton.disabled = false;
-                submitButton.classList.remove('opacity-50', 'cursor-default');
-                submitButton.classList.add('cursor-pointer');
-                console.log('Attempting to force enable and click submit button');
-                simulateMouseEvents(submitButton);
-            }
         }
         console.groupEnd();
     }
@@ -221,14 +222,4 @@ javascript:(function() {
         console.error('Textarea not found');
     }
 
-    // Monitor changes to the submit button
-    setInterval(() => {
-        const submitButton = document.querySelector('button[aria-label="Submit"]');
-        if (submitButton) {
-            console.log('Submit button state:', submitButton.disabled ? 'disabled' : 'enabled');
-        } else {
-            console.log('Submit button not found');
-        }
-    }, 1000);
-
-})(); // Version 0.1.17
+})(); // Version 0.1.18
