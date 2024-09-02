@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.24';
+    const version = '0.1.25';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
 
     let targetElement;
@@ -87,38 +87,85 @@ javascript:(function() {
             console.log('After voice input snapshot taken:', afterVoiceInputSnapshot);
             const changes = compareSnapshots(initialSnapshot, afterVoiceInputSnapshot);
             console.log('Changes after voice input:', changes);
-            monitorSubmitButton();
+            triggerSearch();
         }, 1000);
 
         console.groupEnd();
     }
 
-    function monitorSubmitButton() {
+    function triggerSearch() {
+        console.log('Attempting to trigger search');
+        const enterEvent = new KeyboardEvent('keydown', {
+            bubbles: true,
+            cancelable: true,
+            key: 'Enter',
+            keyCode: 13,
+            which: 13
+        });
+        targetElement.dispatchEvent(enterEvent);
+        console.log('Enter key event dispatched');
+
+        // Also try to click the submit button as a fallback
         const submitButton = document.querySelector('button[aria-label="Submit"]');
         if (submitButton) {
-            console.log('Submit button found. Attributes:', submitButton.attributes);
-            console.log('Submit button disabled:', submitButton.disabled);
-            console.log('Submit button classes:', submitButton.className);
-            
-            // Try to enable the button by modifying its classes
-            submitButton.classList.remove('opacity-50', 'cursor-default');
-            submitButton.classList.add('cursor-pointer');
-            submitButton.disabled = false;
-            
-            console.log('Attempted to enable submit button');
-            console.log('Submit button classes after attempt:', submitButton.className);
-            console.log('Submit button disabled after attempt:', submitButton.disabled);
-            
-            // Simulate a click on the submit button
+            console.log('Submit button found, attempting to click');
             submitButton.click();
-            console.log('Simulated click on submit button');
         } else {
             console.log('Submit button not found');
         }
     }
 
-    // ... (rest of the code remains the same)
+    // Initialize speech recognition
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.continuous = true;
+
+    let isListening = false;
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[event.results.length - 1][0].transcript.trim();
+        console.log('Voice input received:', transcript);
+        simulateTyping(transcript);
+    };
+
+    function stopListening() {
+        if (isListening) {
+            recognition.stop();
+            isListening = false;
+            console.log('Listening stopped');
+        }
+    }
+
+    // Create a UI element for the microphone
+    const micUI = document.createElement('button');
+    micUI.style.position = 'fixed';
+    micUI.style.bottom = '20px';
+    micUI.style.right = '20px';
+    micUI.style.width = '50px';
+    micUI.style.height = '50px';
+    micUI.style.borderRadius = '50%';
+    micUI.style.backgroundColor = '#4CAF50';
+    micUI.style.color = 'white';
+    micUI.style.border = 'none';
+    micUI.style.fontSize = '24px';
+    micUI.style.cursor = 'pointer';
+    micUI.style.zIndex = '9999';
+    micUI.innerHTML = '🎤';
+    document.body.appendChild(micUI);
+
+    micUI.addEventListener('click', () => {
+        if (!isListening) {
+            recognition.start();
+            isListening = true;
+            micUI.style.backgroundColor = '#F44336';
+            console.log('Listening started');
+        } else {
+            stopListening();
+            micUI.style.backgroundColor = '#4CAF50';
+        }
+    });
 
     initializeMonitoring();
 
-})(); // Version 0.1.24
+})(); // Version 0.1.25
