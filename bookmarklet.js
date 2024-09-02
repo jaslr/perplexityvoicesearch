@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.22';
+    const version = '0.1.23';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
 
     let targetElement;
@@ -29,8 +29,7 @@ javascript:(function() {
     }
 
     function findTargetElement() {
-        const textarea = document.querySelector('textarea[placeholder="Ask anything..."]');
-        return textarea || textarea.closest('div');
+        return document.querySelector('textarea[placeholder="Ask anything..."]');
     }
 
     function initializeMonitoring() {
@@ -53,6 +52,62 @@ javascript:(function() {
             });
         } else {
             console.error('Target element not found');
+        }
+    }
+
+    function simulateTyping(text) {
+        console.group('Voice Input Processing');
+        if (!targetElement) {
+            console.error('Target element not found');
+            console.groupEnd();
+            return;
+        }
+
+        console.log('Input text:', text);
+        targetElement.value = text;
+        targetElement.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+        targetElement.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
+
+        // Simulate more detailed typing events
+        text.split('').forEach((char, index) => {
+            targetElement.value = text.slice(0, index + 1);
+            targetElement.dispatchEvent(new KeyboardEvent('keydown', { key: char, bubbles: true }));
+            targetElement.dispatchEvent(new KeyboardEvent('keypress', { key: char, bubbles: true }));
+            targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: char, bubbles: true }));
+            targetElement.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+
+        // Dispatch a final set of events
+        targetElement.dispatchEvent(new Event('change', { bubbles: true }));
+        targetElement.dispatchEvent(new Event('blur', { bubbles: true }));
+        targetElement.dispatchEvent(new Event('focus', { bubbles: true }));
+
+        setTimeout(() => {
+            afterVoiceInputSnapshot = takeSnapshot(targetElement);
+            console.log('After voice input snapshot taken:', afterVoiceInputSnapshot);
+            const changes = compareSnapshots(initialSnapshot, afterVoiceInputSnapshot);
+            console.log('Changes after voice input:', changes);
+            monitorSubmitButton();
+        }, 1000);
+
+        console.groupEnd();
+    }
+
+    function monitorSubmitButton() {
+        const submitButton = document.querySelector('button[aria-label="Submit"]');
+        if (submitButton) {
+            console.log('Submit button found. Attributes:', submitButton.attributes);
+            console.log('Submit button disabled:', submitButton.disabled);
+            console.log('Submit button classes:', submitButton.className);
+            
+            // Try to enable the button
+            submitButton.disabled = false;
+            submitButton.click();
+            
+            console.log('Attempted to enable and click submit button');
+            console.log('Submit button disabled after attempt:', submitButton.disabled);
+        } else {
+            console.log('Submit button not found');
         }
     }
 
@@ -111,32 +166,6 @@ javascript:(function() {
     let isListening = false;
     let lastInputText = '';
 
-    function simulateTyping(text) {
-        console.group('Voice Input Processing');
-        if (!targetElement) {
-            console.error('Target element not found');
-            console.groupEnd();
-            return;
-        }
-
-        console.log('Input text:', text);
-        lastInputText = text;
-        targetElement.value = text;
-
-        ['input', 'keydown', 'keyup', 'change'].forEach(eventType => {
-            const event = new Event(eventType, { bubbles: true });
-            targetElement.dispatchEvent(event);
-            console.log(`Dispatched ${eventType} event`);
-        });
-
-        afterVoiceInputSnapshot = takeSnapshot(targetElement);
-        console.log('After voice input snapshot taken:', afterVoiceInputSnapshot);
-        const changes = compareSnapshots(initialSnapshot, afterVoiceInputSnapshot);
-        console.log('Changes after voice input:', changes);
-
-        console.groupEnd();
-    }
-
     recognition.onresult = (event) => {
         const transcript = event.results[event.results.length - 1][0].transcript.trim();
         console.log('Voice input received:', transcript);
@@ -173,4 +202,4 @@ javascript:(function() {
 
     initializeMonitoring();
 
-})(); // Version 0.1.22
+})(); // Version 0.1.23
