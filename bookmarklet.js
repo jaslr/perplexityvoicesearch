@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.28';
+    const version = '0.1.30';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
 
     let targetElement;
@@ -72,9 +72,8 @@ javascript:(function() {
         // Clear the existing content
         targetElement.value = '';
         targetElement.dispatchEvent(new Event('input', { bubbles: true }));
-        
-        let index = 0;
-        function typeNextChar() {
+
+        const typeCharacter = (index) => {
             if (index < text.length) {
                 const char = text[index];
                 targetElement.value += char;
@@ -82,8 +81,9 @@ javascript:(function() {
                 targetElement.dispatchEvent(new KeyboardEvent('keydown', { key: char, bubbles: true }));
                 targetElement.dispatchEvent(new KeyboardEvent('keypress', { key: char, bubbles: true }));
                 targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: char, bubbles: true }));
-                index++;
-                setTimeout(typeNextChar, 50); // Adjust this delay as needed
+                
+                const delay = Math.floor(Math.random() * 100) + 50; // Random delay between 50-150ms
+                setTimeout(() => typeCharacter(index + 1), delay);
             } else {
                 targetElement.dispatchEvent(new Event('change', { bubbles: true }));
                 setTimeout(() => {
@@ -91,39 +91,39 @@ javascript:(function() {
                     console.log('After voice input snapshot taken:', afterVoiceInputSnapshot);
                     const changes = compareSnapshots(initialSnapshot, afterVoiceInputSnapshot);
                     console.log('Changes after voice input:', changes);
-                    triggerSearch();
+                    monitorSubmitButton();
                 }, 500);
             }
-        }
-        
-        typeNextChar();
+        };
+
+        typeCharacter(0);
         console.groupEnd();
     }
 
-    function triggerSearch() {
-        console.log('Attempting to trigger search');
-        const enterEvent = new KeyboardEvent('keydown', {
-            bubbles: true,
-            cancelable: true,
-            key: 'Enter',
-            keyCode: 13,
-            which: 13
-        });
-        targetElement.dispatchEvent(enterEvent);
-        console.log('Enter key event dispatched');
-
-        // Simulate the exact sequence of events that occur when Enter is pressed
-        targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
-        targetElement.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', bubbles: true }));
-
-        // Also try to click the submit button
+    function monitorSubmitButton() {
         const submitButton = document.querySelector('button[aria-label="Submit"]');
         if (submitButton) {
-            console.log('Submit button found, attempting to click');
-            submitButton.click();
-            // Simulate mousedown and mouseup events
-            submitButton.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-            submitButton.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+            console.log('Submit button found. Monitoring state...');
+            let checkInterval = setInterval(() => {
+                console.log('Checking submit button state...');
+                console.log('Button disabled:', submitButton.disabled);
+                console.log('Button classes:', submitButton.className);
+                
+                if (!submitButton.disabled && !submitButton.className.includes('opacity-50')) {
+                    console.log('Submit button appears to be enabled. Attempting to click...');
+                    clearInterval(checkInterval);
+                    submitButton.click();
+                    submitButton.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+                    submitButton.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+                    console.log('Click events dispatched on submit button');
+                }
+            }, 500); // Check every 500ms
+
+            // Stop checking after 10 seconds to prevent infinite loop
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                console.log('Stopped monitoring submit button after 10 seconds');
+            }, 10000);
         } else {
             console.log('Submit button not found');
         }
@@ -182,4 +182,4 @@ javascript:(function() {
 
     initializeMonitoring();
 
-})(); // Version 0.1.28
+})(); // Version 0.1.30
