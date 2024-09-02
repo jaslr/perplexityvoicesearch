@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.26';
+    const version = '0.1.27';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
 
     let targetElement;
@@ -64,6 +64,10 @@ javascript:(function() {
         }
 
         console.log('Input text:', text);
+        
+        // Clear the existing content
+        targetElement.value = '';
+        targetElement.dispatchEvent(new Event('input', { bubbles: true }));
         
         let index = 0;
         function typeNextChar() {
@@ -167,4 +171,4 @@ javascript:(function() {
 
     initializeMonitoring();
 
-})(); // Version 0.1.26
+})(); // Version 0.1.27
