@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.14';
+    const version = '0.1.16';
 
     // Create a container for the UI elements
     const uiContainer = document.createElement('div');
@@ -72,6 +72,7 @@ javascript:(function() {
     recognition.continuous = true;
 
     let isListening = false;
+    let lastInputText = '';
 
     function simulateMouseEvents(element) {
         const events = ['mousedown', 'mouseup', 'click'];
@@ -89,41 +90,42 @@ javascript:(function() {
     }
 
     function simulateTyping(text) {
+        console.group('Voice Input Processing');
         const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
         const hiddenInput = document.querySelector('input[type="hidden"]');
         if (!inputField) {
             console.error('Input field not found');
+            console.groupEnd();
             return;
         }
 
-        console.log('Simulating mouse events on input field');
+        console.log('Simulating mouse click on input field');
         simulateMouseEvents(inputField);
         inputField.focus();
 
-        console.log('Starting simulated typing:', text);
-        inputField.value = ''; // Clear the input field first
-        let i = 0;
-        function typeChar() {
-            if (i < text.length) {
-                inputField.value += text[i];
-                if (hiddenInput) hiddenInput.value = inputField.value;
-                console.log('Typed character:', text[i], 'Current value:', inputField.value);
-                
-                ['input', 'keydown', 'keyup', 'change'].forEach(eventType => {
-                    const event = new Event(eventType, { bubbles: true });
-                    inputField.dispatchEvent(event);
-                    if (hiddenInput) hiddenInput.dispatchEvent(event);
-                    console.log(`Dispatched ${eventType} event`);
-                });
+        console.log('Input text:', text);
+        lastInputText = text;
+        inputField.value = text;
+        if (hiddenInput) hiddenInput.value = text;
 
-                i++;
-                setTimeout(typeChar, 50);
-            } else {
-                console.log('Finished typing, waiting before triggering search');
-                setTimeout(triggerSearch, 1000); // Wait 1 second before triggering search
-            }
-        }
-        typeChar();
+        ['input', 'keydown', 'keyup', 'change'].forEach(eventType => {
+            const event = new Event(eventType, { bubbles: true });
+            inputField.dispatchEvent(event);
+            if (hiddenInput) hiddenInput.dispatchEvent(event);
+            console.log(`Dispatched ${eventType} event`);
+        });
+
+        console.log('Simulating keypress event');
+        const keypressEvent = new KeyboardEvent('keypress', {
+            key: 'Enter',
+            keyCode: 13,
+            which: 13,
+            bubbles: true
+        });
+        inputField.dispatchEvent(keypressEvent);
+
+        console.log('Finished typing, waiting before triggering search');
+        setTimeout(triggerSearch, 1000); // Wait 1 second before triggering search
     }
 
     recognition.onresult = (event) => {
@@ -137,6 +139,7 @@ javascript:(function() {
         console.log('Submit button:', submitButton);
         console.log('Submit button disabled:', submitButton ? submitButton.disabled : 'N/A');
         if (submitButton && !submitButton.disabled) {
+            console.log('Clicking submit button');
             simulateMouseEvents(submitButton);
             console.log('Search triggered after voice input');
         } else {
@@ -146,10 +149,11 @@ javascript:(function() {
                 submitButton.disabled = false;
                 submitButton.classList.remove('opacity-50', 'cursor-default');
                 submitButton.classList.add('cursor-pointer');
+                console.log('Attempting to force enable and click submit button');
                 simulateMouseEvents(submitButton);
-                console.log('Attempted to force enable and click submit button');
             }
         }
+        console.groupEnd();
     }
 
     function stopListening() {
@@ -183,10 +187,21 @@ javascript:(function() {
     // Monitor changes to the textarea
     const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
     if (inputField) {
-        inputField.addEventListener('input', function(e) {
-            console.log('Textarea value changed:', e.target.value);
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'characterData' || mutation.type === 'childList') {
+                    console.log('Textarea value changed:', inputField.value);
+                    if (inputField.value === '' && lastInputText !== '') {
+                        console.log('Textarea cleared unexpectedly, restoring text');
+                        inputField.value = lastInputText;
+                        inputField.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                }
+            });
         });
-        console.log('Textarea found');
+
+        observer.observe(inputField, { characterData: true, childList: true, subtree: true });
+        console.log('Textarea observer set up');
     } else {
         console.error('Textarea not found');
     }
@@ -201,4 +216,4 @@ javascript:(function() {
         }
     }, 1000);
 
-})(); // Version 0.1.14
+})(); // Version 0.1.16
