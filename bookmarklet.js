@@ -1,6 +1,7 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.18';
+    const version = '0.1.19';
+    console.log(`Voice Input Bookmarklet v${version} loaded`);
 
     // Create a container for the UI elements
     const uiContainer = document.createElement('div');
@@ -222,4 +223,4 @@ javascript:(function() {
         console.error('Textarea not found');
     }
 
-})(); // Version 0.1.18
+})(); // Version 0.1.19
