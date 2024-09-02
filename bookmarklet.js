@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.30';
+    const version = '0.1.31';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
 
     let targetElement;
@@ -182,4 +182,4 @@ javascript:(function() {
 
     initializeMonitoring();
 
-})(); // Version 0.1.30
+})(); // Version 0.1.31
