@@ -1,66 +1,58 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.21';
+    const version = '0.1.22';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
 
-    let targetDiv;
+    let targetElement;
     let initialSnapshot;
     let afterTypingSnapshot;
     let afterVoiceInputSnapshot;
 
     function takeSnapshot(element) {
         return {
+            tagName: element.tagName,
             classes: element.className,
-            textContent: element.textContent,
+            value: element.value || element.textContent,
             childrenCount: element.children.length,
-            hasTextMainClass: element.classList.contains('text-textMain')
+            attributes: Array.from(element.attributes).map(attr => `${attr.name}="${attr.value}"`).join(', ')
         };
     }
 
     function compareSnapshots(snapshot1, snapshot2) {
         return {
+            tagNameChanged: snapshot1.tagName !== snapshot2.tagName,
             classesChanged: snapshot1.classes !== snapshot2.classes,
-            textContentChanged: snapshot1.textContent !== snapshot2.textContent,
+            valueChanged: snapshot1.value !== snapshot2.value,
             childrenCountChanged: snapshot1.childrenCount !== snapshot2.childrenCount,
-            textMainClassChanged: snapshot1.hasTextMainClass !== snapshot2.hasTextMainClass
+            attributesChanged: snapshot1.attributes !== snapshot2.attributes
         };
     }
 
-    function findTargetDiv() {
-        const divs = document.querySelectorAll('div');
-        for (const div of divs) {
-            if (div.className.includes('text-textMain') && div.className.includes('items-center')) {
-                return div;
-            }
-        }
-        return null;
+    function findTargetElement() {
+        const textarea = document.querySelector('textarea[placeholder="Ask anything..."]');
+        return textarea || textarea.closest('div');
     }
 
     function initializeMonitoring() {
-        targetDiv = findTargetDiv();
-        if (targetDiv) {
-            initialSnapshot = takeSnapshot(targetDiv);
+        targetElement = findTargetElement();
+        if (targetElement) {
+            initialSnapshot = takeSnapshot(targetElement);
             console.log('Initial snapshot taken:', initialSnapshot);
             
             alert('Please type "rabbits" in the input field. The script will take another snapshot when "rabbits" is entered.');
             
-            const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
-            if (inputField) {
-                inputField.addEventListener('input', function() {
-                    if (inputField.value.toLowerCase().includes('rabbits')) {
-                        afterTypingSnapshot = takeSnapshot(targetDiv);
-                        console.log('After typing snapshot taken:', afterTypingSnapshot);
-                        const changes = compareSnapshots(initialSnapshot, afterTypingSnapshot);
-                        console.log('Changes after typing:', changes);
-                        
-                        alert('Now please initiate voice input. The script will take another snapshot after voice input is processed.');
-                    }
-                });
-            } else {
-                console.error('Input field not found');
-            }
+            targetElement.addEventListener('input', function() {
+                if (targetElement.value.toLowerCase().includes('rabbits')) {
+                    afterTypingSnapshot = takeSnapshot(targetElement);
+                    console.log('After typing snapshot taken:', afterTypingSnapshot);
+                    const changes = compareSnapshots(initialSnapshot, afterTypingSnapshot);
+                    console.log('Changes after typing:', changes);
+                    
+                    alert('Now please initiate voice input. The script will take another snapshot after voice input is processed.');
+                }
+            });
         } else {
-            console.error('Target div not found');
+            console.error('Target element not found');
         }
     }
 
@@ -121,24 +113,23 @@ javascript:(function() {
 
     function simulateTyping(text) {
         console.group('Voice Input Processing');
-        const inputField = document.querySelector('textarea[placeholder="Ask anything..."]');
-        if (!inputField) {
-            console.error('Input field not found');
+        if (!targetElement) {
+            console.error('Target element not found');
             console.groupEnd();
             return;
         }
 
         console.log('Input text:', text);
         lastInputText = text;
-        inputField.value = text;
+        targetElement.value = text;
 
         ['input', 'keydown', 'keyup', 'change'].forEach(eventType => {
             const event = new Event(eventType, { bubbles: true });
-            inputField.dispatchEvent(event);
+            targetElement.dispatchEvent(event);
             console.log(`Dispatched ${eventType} event`);
         });
 
-        afterVoiceInputSnapshot = takeSnapshot(targetDiv);
+        afterVoiceInputSnapshot = takeSnapshot(targetElement);
         console.log('After voice input snapshot taken:', afterVoiceInputSnapshot);
         const changes = compareSnapshots(initialSnapshot, afterVoiceInputSnapshot);
         console.log('Changes after voice input:', changes);
@@ -182,4 +173,4 @@ javascript:(function() {
 
     initializeMonitoring();
 
-})(); // Version 0.1.21
+})(); // Version 0.1.22
