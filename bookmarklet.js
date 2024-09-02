@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.16';
+    const version = '0.1.17';
 
     // Create a container for the UI elements
     const uiContainer = document.createElement('div');
@@ -105,8 +105,8 @@ javascript:(function() {
 
         console.log('Input text:', text);
         lastInputText = text;
-        inputField.value = text;
-        if (hiddenInput) hiddenInput.value = text;
+        inputField.value = text.slice(0, -1); // Set value to all but last character
+        if (hiddenInput) hiddenInput.value = text.slice(0, -1);
 
         ['input', 'keydown', 'keyup', 'change'].forEach(eventType => {
             const event = new Event(eventType, { bubbles: true });
@@ -115,17 +115,32 @@ javascript:(function() {
             console.log(`Dispatched ${eventType} event`);
         });
 
-        console.log('Simulating keypress event');
-        const keypressEvent = new KeyboardEvent('keypress', {
-            key: 'Enter',
-            keyCode: 13,
-            which: 13,
-            bubbles: true
-        });
-        inputField.dispatchEvent(keypressEvent);
+        // Simulate typing the last character
+        setTimeout(() => {
+            inputField.value = text;
+            if (hiddenInput) hiddenInput.value = text;
+            ['input', 'keydown', 'keyup', 'change'].forEach(eventType => {
+                const event = new Event(eventType, { bubbles: true });
+                inputField.dispatchEvent(event);
+                if (hiddenInput) hiddenInput.dispatchEvent(event);
+                console.log(`Dispatched ${eventType} event for last character`);
+            });
 
-        console.log('Finished typing, waiting before triggering search');
-        setTimeout(triggerSearch, 1000); // Wait 1 second before triggering search
+            // Simulate pressing Enter
+            setTimeout(() => {
+                console.log('Simulating Enter keypress');
+                const keypressEvent = new KeyboardEvent('keypress', {
+                    key: 'Enter',
+                    keyCode: 13,
+                    which: 13,
+                    bubbles: true
+                });
+                inputField.dispatchEvent(keypressEvent);
+
+                console.log('Finished typing, waiting before triggering search');
+                setTimeout(triggerSearch, 1000); // Wait 1 second before triggering search
+            }, 100);
+        }, 100);
     }
 
     recognition.onresult = (event) => {
@@ -216,4 +231,4 @@ javascript:(function() {
         }
     }, 1000);
 
-})(); // Version 0.1.16
+})(); // Version 0.1.17
