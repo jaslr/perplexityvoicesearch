@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.39';
+    const version = '0.1.40';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
 
     let targetElement;
@@ -58,12 +58,30 @@ javascript:(function() {
                 setTimeout(() => typeCharacter(index + 1), delay);
             } else {
                 targetElement.dispatchEvent(new Event('change', { bubbles: true }));
-                setTimeout(monitorSubmitButton, 500);
+                setTimeout(simulateFinalInteraction, 500);
             }
         };
 
         typeCharacter(0);
         console.groupEnd();
+    }
+
+    function simulateFinalInteraction() {
+        console.log('Simulating final interaction');
+        // Simulate pressing space and then backspace
+        targetElement.value += ' ';
+        targetElement.dispatchEvent(new Event('input', { bubbles: true }));
+        targetElement.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+        targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+
+        setTimeout(() => {
+            targetElement.value = targetElement.value.trim();
+            targetElement.dispatchEvent(new Event('input', { bubbles: true }));
+            targetElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
+            targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: 'Backspace', bubbles: true }));
+            
+            setTimeout(monitorSubmitButton, 500);
+        }, 100);
     }
 
     function monitorSubmitButton() {
@@ -163,4 +181,4 @@ javascript:(function() {
         }
     });
 
-})(); // Version 0.1.39
+})(); // Version 0.1.40
