@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.48';
+    const version = '0.1.49';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
 
     let targetElement;
@@ -62,12 +62,40 @@ javascript:(function() {
         console.groupEnd();
     }
 
+    function triggerAdditionalValidations() {
+        console.log('Triggering additional validations');
+        const inputArea = document.querySelector('textarea[placeholder="Ask anything..."]');
+        if (inputArea) {
+            // Simulate more events
+            ['focus', 'blur', 'change', 'input'].forEach(eventType => {
+                inputArea.dispatchEvent(new Event(eventType, { bubbles: true }));
+            });
+            // Simulate a key press
+            inputArea.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            inputArea.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
+            console.log('Additional events dispatched');
+        }
+    }
+
+    function attemptToEnableButton(button) {
+        if (button.disabled) {
+            console.log('Attempting to enable button');
+            // Try to remove the disabled attribute
+            button.disabled = false;
+            button.removeAttribute('disabled');
+            // Try to remove any classes that might be causing the disabled state
+            button.classList.remove('disabled', 'is-disabled');
+            console.log('Button enable attempt completed');
+        }
+    }
+
     function triggerSearch() {
         const submitButton = document.querySelector('button[aria-label="Submit"]');
         if (submitButton) {
             console.log('Submit button found, starting monitoring');
             monitorButtonState(submitButton);
             triggerPotentialValidations();
+            triggerAdditionalValidations();
 
             // Wait a bit to allow for potential async validations
             setTimeout(() => {
@@ -77,8 +105,16 @@ javascript:(function() {
                     console.log('Button click executed');
                 } else {
                     console.error('Button still disabled after waiting');
+                    attemptToEnableButton(submitButton);
+                    if (!submitButton.disabled) {
+                        console.log('Button enabled, attempting to click');
+                        submitButton.click();
+                        console.log('Button click executed after enabling');
+                    } else {
+                        console.error('Failed to enable button');
+                    }
                 }
-            }, 1000);
+            }, 2000);  // Increased wait time to 2 seconds
         } else {
             console.log('Submit button not found');
             // ... (existing textarea fallback logic)
