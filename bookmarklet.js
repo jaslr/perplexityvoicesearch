@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.43';
+    const version = '0.1.45';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
 
     let targetElement;
@@ -63,21 +63,18 @@ javascript:(function() {
     }
 
     function triggerSearch() {
-        console.log('Attempting to trigger search');
-        // Attempt to click the submit button
-        const submitButton = document.querySelector('button[aria-label="Submit"]');
-        if (submitButton) {
-            submitButton.click();
-            submitButton.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-            submitButton.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-            console.log('Click events dispatched on submit button');
+        let searchButton = document.querySelector('button[aria-label="Submit"]');
+        if (searchButton) {
+            console.log('Submit button found:', searchButton);
+            console.log('Submit button attributes:', searchButton.attributes);
+            console.log('Is button disabled?', searchButton.disabled);
+            console.log('Button click attempt');
+            searchButton.click();
+            console.log('Button click executed');
+        } else {
+            console.log('Submit button not found');
+            // ... (existing textarea fallback logic)
         }
-
-        // Simulate pressing Enter key
-        targetElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-        targetElement.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', bubbles: true }));
-        targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
-        console.log('Simulated pressing Enter key');
     }
 
     // Initialize speech recognition
@@ -132,4 +129,40 @@ javascript:(function() {
         }
     });
 
-})(); // Version 0.1.43
+    function traceSubmitButton() {
+        const submitButton = document.querySelector('button[aria-label="Submit"]');
+        if (!submitButton) {
+            console.log('Submit button not found');
+            return;
+        }
+
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes') {
+                    console.log(`Attribute '${mutation.attributeName}' changed`);
+                    console.trace();
+                }
+            });
+        });
+
+        observer.observe(submitButton, {
+            attributes: true,
+            attributeFilter: ['disabled', 'class', 'aria-label'] // Add any other attributes you want to monitor
+        });
+
+        console.log('Submit button observer set up');
+    }
+
+    // Call traceSubmitButton after setting up the voice recognition
+    traceSubmitButton();
+
+    // ... (rest of the existing code)
+
+    // ... (rest of the existing code)
+
+    // Call traceSubmitButton after setting up the voice recognition
+    traceSubmitButton();
+
+    // ... (rest of the existing code)
+
+})();
