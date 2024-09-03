@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.47';
+    const version = '0.1.48';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
 
     let targetElement;
@@ -65,29 +65,52 @@ javascript:(function() {
     function triggerSearch() {
         const submitButton = document.querySelector('button[aria-label="Submit"]');
         if (submitButton) {
-            console.log('Submit button found, checking state');
-            console.log('Initial button state:', {
-                disabled: submitButton.disabled,
-                classList: Array.from(submitButton.classList),
-                ariaLabel: submitButton.getAttribute('aria-label')
-            });
+            console.log('Submit button found, starting monitoring');
+            monitorButtonState(submitButton);
+            triggerPotentialValidations();
 
-            try {
-                 waitForButtonToBeEnabled(submitButton);
-                console.log('Attempting to click enabled button');
-                submitButton.click();
-                console.log('Button click executed');
-            } catch (error) {
-                console.error('Failed to click button:', error);
-                console.log('Final button state:', {
-                    disabled: submitButton.disabled,
-                    classList: Array.from(submitButton.classList),
-                    ariaLabel: submitButton.getAttribute('aria-label')
-                });
-            }
+            // Wait a bit to allow for potential async validations
+            setTimeout(() => {
+                if (!submitButton.disabled) {
+                    console.log('Attempting to click button');
+                    submitButton.click();
+                    console.log('Button click executed');
+                } else {
+                    console.error('Button still disabled after waiting');
+                }
+            }, 1000);
         } else {
             console.log('Submit button not found');
             // ... (existing textarea fallback logic)
+        }
+    }
+
+    function monitorButtonState(button, duration = 5000, interval = 100) {
+        console.log('Starting button state monitoring');
+        const startTime = Date.now();
+        const check = () => {
+            const elapsed = Date.now() - startTime;
+            console.log(`Button state at ${elapsed}ms:`, {
+                disabled: button.disabled,
+                classList: Array.from(button.classList),
+                ariaLabel: button.getAttribute('aria-label')
+            });
+            if (elapsed < duration) {
+                setTimeout(check, interval);
+            } else {
+                console.log('Button monitoring completed');
+            }
+        };
+        check();
+    }
+
+    function triggerPotentialValidations() {
+        console.log('Triggering potential validations');
+        const inputArea = document.querySelector('textarea[placeholder="Ask anything..."]');
+        if (inputArea) {
+            inputArea.dispatchEvent(new Event('input', { bubbles: true }));
+            inputArea.dispatchEvent(new Event('change', { bubbles: true }));
+            console.log('Input events dispatched');
         }
     }
 
