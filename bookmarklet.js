@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.37';
+    const version = '0.1.38';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
 
     let targetElement;
@@ -58,7 +58,7 @@ javascript:(function() {
                 setTimeout(() => typeCharacter(index + 1), delay);
             } else {
                 targetElement.dispatchEvent(new Event('change', { bubbles: true }));
-                setTimeout(simulateFinalUserInput, 500);
+                setTimeout(monitorSubmitButton, 500);
             }
         };
 
@@ -66,34 +66,33 @@ javascript:(function() {
         console.groupEnd();
     }
 
-    function simulateFinalUserInput() {
-        console.log('Simulating final user input');
-        // Add a space
-        targetElement.value += ' ';
-        targetElement.dispatchEvent(new Event('input', { bubbles: true }));
-        targetElement.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
-        targetElement.dispatchEvent(new KeyboardEvent('keypress', { key: ' ', bubbles: true }));
-        targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+    function monitorSubmitButton() {
+        const submitButton = document.querySelector('button[aria-label="Submit"]');
+        if (submitButton) {
+            console.log('Submit button found. Monitoring state...');
+            let checkInterval = setInterval(() => {
+                console.log('Checking submit button state...');
+                console.log('Button disabled:', submitButton.disabled);
+                console.log('Button classes:', submitButton.className);
+                
+                if (!submitButton.disabled && !submitButton.className.includes('opacity-50')) {
+                    console.log('Submit button appears to be enabled. Attempting to click...');
+                    clearInterval(checkInterval);
+                    submitButton.click();
+                    submitButton.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+                    submitButton.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+                    console.log('Click events dispatched on submit button');
+                }
+            }, 500); // Check every 500ms
 
-        // Short delay before removing the space
-        setTimeout(() => {
-            // Remove the space
-            targetElement.value = targetElement.value.trim();
-            targetElement.dispatchEvent(new Event('input', { bubbles: true }));
-            targetElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
-            targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: 'Backspace', bubbles: true }));
-
-            // Trigger change event
-            targetElement.dispatchEvent(new Event('change', { bubbles: true }));
-
-            // Simulate pressing Enter
+            // Stop checking after 10 seconds to prevent infinite loop
             setTimeout(() => {
-                targetElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-                targetElement.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', bubbles: true }));
-                targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
-                console.log('Simulated pressing Enter');
-            }, 100);
-        }, 100);
+                clearInterval(checkInterval);
+                console.log('Stopped monitoring submit button after 10 seconds');
+            }, 10000);
+        } else {
+            console.log('Submit button not found');
+        }
     }
 
     // Initialize speech recognition
@@ -148,4 +147,4 @@ javascript:(function() {
         }
     });
 
-})(); // Version 0.1.37
+})(); // Version 0.1.38
