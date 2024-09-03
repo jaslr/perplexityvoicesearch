@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.41';
+    const version = '0.1.42';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
 
     let targetElement;
@@ -9,83 +9,46 @@ javascript:(function() {
         return document.querySelector('textarea[placeholder="Ask anything..."]');
     }
 
-    function simulateUserInteraction() {
+    function getReactInstance(element) {
+        for (const key in element) {
+            if (key.startsWith('__reactFiber$')) {
+                return element[key];
+            }
+        }
+        return null;
+    }
+
+    function updateReactTextarea(text) {
         targetElement = findTargetElement();
         if (!targetElement) {
             console.error('Target element not found');
             return;
         }
 
-        // Simulate mouse events
-        targetElement.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-        targetElement.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-        targetElement.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-
-        // Focus the element
-        targetElement.focus();
-
-        console.log('Simulated user interaction with text area');
-    }
-
-    function simulateTyping(text) {
-        console.group('Voice Input Processing');
-        if (!targetElement) {
-            console.error('Target element not found');
-            console.groupEnd();
+        const reactInstance = getReactInstance(targetElement);
+        if (!reactInstance) {
+            console.error('React instance not found');
             return;
         }
 
-        console.log('Input text:', text);
-        
-        // Clear the existing content
-        targetElement.value = '';
-        triggerReactChange(targetElement);
-
-        const typeCharacter = (index) => {
-            if (index < text.length) {
-                const char = text[index];
-                targetElement.value += char;
-                triggerReactChange(targetElement);
+        // Find the React component that manages the textarea
+        let fiber = reactInstance;
+        while (fiber) {
+            if (fiber.stateNode && fiber.stateNode.constructor && fiber.stateNode.constructor.name === 'ChatInput') {
+                const chatInput = fiber.stateNode;
                 
-                const delay = Math.floor(Math.random() * 50) + 25; // Random delay between 25-75ms
-                setTimeout(() => typeCharacter(index + 1), delay);
-            } else {
-                setTimeout(simulateFinalInteraction, 500);
+                // Update the component's state
+                chatInput.setState({ inputText: text }, () => {
+                    console.log('React state updated');
+                    simulateEnterKey();
+                });
+                
+                return;
             }
-        };
-
-        typeCharacter(0);
-        console.groupEnd();
-    }
-
-    function triggerReactChange(element) {
-        const lastValue = element.value;
-        element.value = lastValue + ' ';
-        element.dispatchEvent(new Event('input', { bubbles: true }));
-        element.dispatchEvent(new Event('change', { bubbles: true }));
-        element.value = lastValue;
-        element.dispatchEvent(new Event('input', { bubbles: true }));
-        element.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-
-    function simulateFinalInteraction() {
-        console.log('Simulating final interaction');
-        triggerReactChange(targetElement);
-        setTimeout(attemptSubmit, 500);
-    }
-
-    function attemptSubmit() {
-        const submitButton = document.querySelector('button[aria-label="Submit"]');
-        if (submitButton && !submitButton.disabled && !submitButton.className.includes('opacity-50')) {
-            console.log('Submit button appears to be enabled. Attempting to click...');
-            submitButton.click();
-            submitButton.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-            submitButton.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-            console.log('Click events dispatched on submit button');
-        } else {
-            console.log('Submit button not clickable. Attempting to use Enter key...');
-            simulateEnterKey();
+            fiber = fiber.return;
         }
+
+        console.error('ChatInput component not found');
     }
 
     function simulateEnterKey() {
@@ -110,7 +73,7 @@ javascript:(function() {
         const result = event.results[event.results.length - 1];
         const transcript = result[0].transcript;
         console.log('Voice input received:', transcript);
-        simulateTyping(transcript);
+        updateReactTextarea(transcript);
     };
 
     function stopListening() {
@@ -140,7 +103,6 @@ javascript:(function() {
 
     micUI.addEventListener('click', () => {
         if (!isListening) {
-            simulateUserInteraction();
             recognition.start();
             isListening = true;
             micUI.style.backgroundColor = '#F44336';
@@ -151,4 +113,4 @@ javascript:(function() {
         }
     });
 
-})(); // Version 0.1.41
+})(); // Version 0.1.42
