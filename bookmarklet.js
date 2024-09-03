@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.46';
+    const version = '0.1.47';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
 
     let targetElement;
@@ -65,18 +65,50 @@ javascript:(function() {
     function triggerSearch() {
         const submitButton = document.querySelector('button[aria-label="Submit"]');
         if (submitButton) {
-            console.log('Submit button found, attempting to click');
-            console.log('Button state:', {
+            console.log('Submit button found, checking state');
+            console.log('Initial button state:', {
                 disabled: submitButton.disabled,
                 classList: Array.from(submitButton.classList),
                 ariaLabel: submitButton.getAttribute('aria-label')
             });
-            submitButton.click();
-            console.log('Button click executed');
+
+            try {
+                 waitForButtonToBeEnabled(submitButton);
+                console.log('Attempting to click enabled button');
+                submitButton.click();
+                console.log('Button click executed');
+            } catch (error) {
+                console.error('Failed to click button:', error);
+                console.log('Final button state:', {
+                    disabled: submitButton.disabled,
+                    classList: Array.from(submitButton.classList),
+                    ariaLabel: submitButton.getAttribute('aria-label')
+                });
+            }
         } else {
             console.log('Submit button not found');
             // ... (existing textarea fallback logic)
         }
+    }
+
+    function waitForButtonToBeEnabled(button, maxAttempts = 10, interval = 100) {
+        return new Promise((resolve, reject) => {
+            let attempts = 0;
+            const check = () => {
+                attempts++;
+                if (!button.disabled) {
+                    console.log('Button is now enabled');
+                    resolve();
+                } else if (attempts >= maxAttempts) {
+                    console.log(`Button still disabled after ${maxAttempts} attempts`);
+                    reject(new Error('Button remained disabled'));
+                } else {
+                    console.log(`Button still disabled, attempt ${attempts}`);
+                    setTimeout(check, interval);
+                }
+            };
+            check();
+        });
     }
 
     // Initialize speech recognition
