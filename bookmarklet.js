@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.38';
+    const version = '0.1.39';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
 
     let targetElement;
@@ -85,13 +85,29 @@ javascript:(function() {
                 }
             }, 500); // Check every 500ms
 
-            // Stop checking after 10 seconds to prevent infinite loop
+            // Stop checking after 5 seconds and try Enter key if button is still disabled
             setTimeout(() => {
                 clearInterval(checkInterval);
-                console.log('Stopped monitoring submit button after 10 seconds');
-            }, 10000);
+                console.log('Stopped monitoring submit button after 5 seconds');
+                if (submitButton.disabled || submitButton.className.includes('opacity-50')) {
+                    console.log('Submit button still disabled. Attempting to use Enter key...');
+                    simulateEnterKey();
+                }
+            }, 5000);
         } else {
-            console.log('Submit button not found');
+            console.log('Submit button not found. Attempting to use Enter key...');
+            simulateEnterKey();
+        }
+    }
+
+    function simulateEnterKey() {
+        if (targetElement) {
+            targetElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            targetElement.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', bubbles: true }));
+            targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
+            console.log('Simulated pressing Enter key');
+        } else {
+            console.error('Target element not found for Enter key simulation');
         }
     }
 
@@ -147,4 +163,4 @@ javascript:(function() {
         }
     });
 
-})(); // Version 0.1.38
+})(); // Version 0.1.39
