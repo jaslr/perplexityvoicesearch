@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.40';
+    const version = '0.1.41';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
 
     let targetElement;
@@ -24,10 +24,6 @@ javascript:(function() {
         // Focus the element
         targetElement.focus();
 
-        // Simulate a keyboard event (e.g., pressing and releasing a space key)
-        targetElement.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
-        targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
-
         console.log('Simulated user interaction with text area');
     }
 
@@ -43,21 +39,17 @@ javascript:(function() {
         
         // Clear the existing content
         targetElement.value = '';
-        targetElement.dispatchEvent(new Event('input', { bubbles: true }));
+        triggerReactChange(targetElement);
 
         const typeCharacter = (index) => {
             if (index < text.length) {
                 const char = text[index];
                 targetElement.value += char;
-                targetElement.dispatchEvent(new Event('input', { bubbles: true }));
-                targetElement.dispatchEvent(new KeyboardEvent('keydown', { key: char, bubbles: true }));
-                targetElement.dispatchEvent(new KeyboardEvent('keypress', { key: char, bubbles: true }));
-                targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: char, bubbles: true }));
+                triggerReactChange(targetElement);
                 
                 const delay = Math.floor(Math.random() * 50) + 25; // Random delay between 25-75ms
                 setTimeout(() => typeCharacter(index + 1), delay);
             } else {
-                targetElement.dispatchEvent(new Event('change', { bubbles: true }));
                 setTimeout(simulateFinalInteraction, 500);
             }
         };
@@ -66,54 +58,32 @@ javascript:(function() {
         console.groupEnd();
     }
 
-    function simulateFinalInteraction() {
-        console.log('Simulating final interaction');
-        // Simulate pressing space and then backspace
-        targetElement.value += ' ';
-        targetElement.dispatchEvent(new Event('input', { bubbles: true }));
-        targetElement.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
-        targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
-
-        setTimeout(() => {
-            targetElement.value = targetElement.value.trim();
-            targetElement.dispatchEvent(new Event('input', { bubbles: true }));
-            targetElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
-            targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: 'Backspace', bubbles: true }));
-            
-            setTimeout(monitorSubmitButton, 500);
-        }, 100);
+    function triggerReactChange(element) {
+        const lastValue = element.value;
+        element.value = lastValue + ' ';
+        element.dispatchEvent(new Event('input', { bubbles: true }));
+        element.dispatchEvent(new Event('change', { bubbles: true }));
+        element.value = lastValue;
+        element.dispatchEvent(new Event('input', { bubbles: true }));
+        element.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    function monitorSubmitButton() {
-        const submitButton = document.querySelector('button[aria-label="Submit"]');
-        if (submitButton) {
-            console.log('Submit button found. Monitoring state...');
-            let checkInterval = setInterval(() => {
-                console.log('Checking submit button state...');
-                console.log('Button disabled:', submitButton.disabled);
-                console.log('Button classes:', submitButton.className);
-                
-                if (!submitButton.disabled && !submitButton.className.includes('opacity-50')) {
-                    console.log('Submit button appears to be enabled. Attempting to click...');
-                    clearInterval(checkInterval);
-                    submitButton.click();
-                    submitButton.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-                    submitButton.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-                    console.log('Click events dispatched on submit button');
-                }
-            }, 500); // Check every 500ms
+    function simulateFinalInteraction() {
+        console.log('Simulating final interaction');
+        triggerReactChange(targetElement);
+        setTimeout(attemptSubmit, 500);
+    }
 
-            // Stop checking after 5 seconds and try Enter key if button is still disabled
-            setTimeout(() => {
-                clearInterval(checkInterval);
-                console.log('Stopped monitoring submit button after 5 seconds');
-                if (submitButton.disabled || submitButton.className.includes('opacity-50')) {
-                    console.log('Submit button still disabled. Attempting to use Enter key...');
-                    simulateEnterKey();
-                }
-            }, 5000);
+    function attemptSubmit() {
+        const submitButton = document.querySelector('button[aria-label="Submit"]');
+        if (submitButton && !submitButton.disabled && !submitButton.className.includes('opacity-50')) {
+            console.log('Submit button appears to be enabled. Attempting to click...');
+            submitButton.click();
+            submitButton.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+            submitButton.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+            console.log('Click events dispatched on submit button');
         } else {
-            console.log('Submit button not found. Attempting to use Enter key...');
+            console.log('Submit button not clickable. Attempting to use Enter key...');
             simulateEnterKey();
         }
     }
@@ -181,4 +151,4 @@ javascript:(function() {
         }
     });
 
-})(); // Version 0.1.40
+})(); // Version 0.1.41
