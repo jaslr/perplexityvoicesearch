@@ -1,48 +1,16 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.36';
+    const version = '0.1.37';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
 
     let targetElement;
-    let initialSnapshot;
-    let afterTypingSnapshot;
-    let afterVoiceInputSnapshot;
-
-    function takeSnapshot(element) {
-        return {
-            tagName: element.tagName,
-            classes: element.className,
-            value: element.value || element.textContent,
-            childrenCount: element.children.length,
-            attributes: Array.from(element.attributes).map(attr => `${attr.name}="${attr.value}"`).join(', ')
-        };
-    }
-
-    function compareSnapshots(snapshot1, snapshot2) {
-        return {
-            tagNameChanged: snapshot1.tagName !== snapshot2.tagName,
-            classesChanged: snapshot1.classes !== snapshot2.classes,
-            valueChanged: snapshot1.value !== snapshot2.value,
-            childrenCountChanged: snapshot1.childrenCount !== snapshot2.childrenCount,
-            attributesChanged: snapshot1.attributes !== snapshot2.attributes
-        };
-    }
 
     function findTargetElement() {
         return document.querySelector('textarea[placeholder="Ask anything..."]');
     }
 
-    function initializeMonitoring() {
-        targetElement = findTargetElement();
-        if (targetElement) {
-            initialSnapshot = takeSnapshot(targetElement);
-            console.log('Initial snapshot taken:', initialSnapshot);
-        } else {
-            console.error('Target element not found');
-        }
-    }
-
     function simulateUserInteraction() {
+        targetElement = findTargetElement();
         if (!targetElement) {
             console.error('Target element not found');
             return;
@@ -73,9 +41,6 @@ javascript:(function() {
 
         console.log('Input text:', text);
         
-        // Simulate user interaction
-        simulateUserInteraction();
-        
         // Clear the existing content
         targetElement.value = '';
         targetElement.dispatchEvent(new Event('input', { bubbles: true }));
@@ -89,17 +54,11 @@ javascript:(function() {
                 targetElement.dispatchEvent(new KeyboardEvent('keypress', { key: char, bubbles: true }));
                 targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: char, bubbles: true }));
                 
-                const delay = Math.floor(Math.random() * 100) + 50; // Random delay between 50-150ms
+                const delay = Math.floor(Math.random() * 50) + 25; // Random delay between 25-75ms
                 setTimeout(() => typeCharacter(index + 1), delay);
             } else {
                 targetElement.dispatchEvent(new Event('change', { bubbles: true }));
-                setTimeout(() => {
-                    afterVoiceInputSnapshot = takeSnapshot(targetElement);
-                    console.log('After voice input snapshot taken:', afterVoiceInputSnapshot);
-                    const changes = compareSnapshots(initialSnapshot, afterVoiceInputSnapshot);
-                    console.log('Changes after voice input:', changes);
-                    simulateFinalUserInput();
-                }, 500);
+                setTimeout(simulateFinalUserInput, 500);
             }
         };
 
@@ -119,7 +78,7 @@ javascript:(function() {
         // Short delay before removing the space
         setTimeout(() => {
             // Remove the space
-            targetElement.value = targetElement.value.slice(0, -1);
+            targetElement.value = targetElement.value.trim();
             targetElement.dispatchEvent(new Event('input', { bubbles: true }));
             targetElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
             targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: 'Backspace', bubbles: true }));
@@ -127,38 +86,14 @@ javascript:(function() {
             // Trigger change event
             targetElement.dispatchEvent(new Event('change', { bubbles: true }));
 
-            // Now monitor the submit button
-            monitorSubmitButton();
-        }, 100);
-    }
-
-    function monitorSubmitButton() {
-        const submitButton = document.querySelector('button[aria-label="Submit"]');
-        if (submitButton) {
-            console.log('Submit button found. Monitoring state...');
-            let checkInterval = setInterval(() => {
-                console.log('Checking submit button state...');
-                console.log('Button disabled:', submitButton.disabled);
-                console.log('Button classes:', submitButton.className);
-                
-                if (!submitButton.disabled && !submitButton.className.includes('opacity-50')) {
-                    console.log('Submit button appears to be enabled. Attempting to click...');
-                    clearInterval(checkInterval);
-                    submitButton.click();
-                    submitButton.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-                    submitButton.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-                    console.log('Click events dispatched on submit button');
-                }
-            }, 500); // Check every 500ms
-
-            // Stop checking after 10 seconds to prevent infinite loop
+            // Simulate pressing Enter
             setTimeout(() => {
-                clearInterval(checkInterval);
-                console.log('Stopped monitoring submit button after 10 seconds');
-            }, 10000);
-        } else {
-            console.log('Submit button not found');
-        }
+                targetElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+                targetElement.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', bubbles: true }));
+                targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
+                console.log('Simulated pressing Enter');
+            }, 100);
+        }, 100);
     }
 
     // Initialize speech recognition
@@ -202,6 +137,7 @@ javascript:(function() {
 
     micUI.addEventListener('click', () => {
         if (!isListening) {
+            simulateUserInteraction();
             recognition.start();
             isListening = true;
             micUI.style.backgroundColor = '#F44336';
@@ -212,6 +148,4 @@ javascript:(function() {
         }
     });
 
-    initializeMonitoring();
-
-})(); // Version 0.1.36
+})(); // Version 0.1.37
