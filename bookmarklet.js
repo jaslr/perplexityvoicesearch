@@ -1,6 +1,6 @@
 javascript:(function() {
     // Version number
-    const version = '0.1.34';
+    const version = '0.1.35';
     console.log(`Voice Input Bookmarklet v${version} loaded`);
 
     let targetElement;
@@ -42,6 +42,27 @@ javascript:(function() {
         }
     }
 
+    function simulateUserInteraction() {
+        if (!targetElement) {
+            console.error('Target element not found');
+            return;
+        }
+
+        // Simulate mouse events
+        targetElement.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+        targetElement.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+        targetElement.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+        // Focus the element
+        targetElement.focus();
+
+        // Simulate a keyboard event (e.g., pressing and releasing a space key)
+        targetElement.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+        targetElement.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+
+        console.log('Simulated user interaction with text area');
+    }
+
     function simulateTyping(text) {
         console.group('Voice Input Processing');
         if (!targetElement) {
@@ -52,8 +73,8 @@ javascript:(function() {
 
         console.log('Input text:', text);
         
-        // Focus on the target element
-        targetElement.focus();
+        // Simulate user interaction
+        simulateUserInteraction();
         
         // Clear the existing content
         targetElement.value = '';
@@ -168,4 +189,4 @@ javascript:(function() {
 
     initializeMonitoring();
 
-})(); // Version 0.1.34
+})(); // Version 0.1.35
